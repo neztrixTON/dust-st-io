@@ -255,35 +255,36 @@
       }
 
       function renderPackages() {
-        pkgListEl.innerHTML = '';
-        const list = expanded ? pkgCounts : [50,500,2500];
+        packageListEl.innerHTML = '';
+        const list = expanded ? pkgCounts : [50, 500, 2500];
         list.forEach(stars => {
-          const price = pkgPrices[stars]||0;
-          const div = document.createElement('div');
-          div.className = 'package' + (selectedStars===stars?' selected':'');
-          div.innerHTML = `
-            <div class="left">
-              <div class="checkbox"></div>
-              <div class="stars">
-                <img src="star.svg"/><img src="star.svg"/><img src="star.svg"/>
-              </div>
-              <span>${stars.toLocaleString()} Stars</span>
-            </div>
-            <div class="price">
-              <img src="ton.svg" class="ton-logo"/>
-              <span>${fmt(price)}</span>
-            </div>`;
-          div.onclick = () => {
-            selectedStars = stars;
-            amountEl.value = '';
-            priceInline.style.display = 'none';
-            updateBuyBtn();
-            renderPackages();
-          };
-          pkgListEl.appendChild(div);
-        });
-        toggleBtn.textContent = expanded ? 'Hide More Options ▲' : 'Show More Options ▼';
-      }
+          // достаём цену в TON (мы сохранили её в pkgPrices[stars], уже /1e9)
+        const priceTON = pkgPrices[stars] || 0;
+        const div = document.createElement('div');
+        div.className = 'package' + (selectedStars === stars ? ' selected' : '');
+        div.innerHTML = `
+        <div class="left">
+        <div class="checkbox"></div>
+        <div class="stars">
+          <img src="star.svg"/><img src="star.svg"/><img src="star.svg"/>
+        </div>
+        <span>${stars.toLocaleString()} Stars</span>
+        </div>
+        <div class="price">
+        <img src="ton.svg" class="ton-logo"/>
+        <span>${fmt(priceTON)}</span>
+        </div>`;
+        div.onclick = () => {
+          selectedStars = stars;
+          amountEl.value = '';
+          priceInline.style.display = 'none';
+          updateBuyBtn();
+          renderPackages();
+        };
+        packageListEl.appendChild(div);
+      });
+      toggleBtn.textContent = expanded ? 'Hide More Options ▲' : 'Show More Options ▼';
+    }
 
       // Инициализация цен пакетов
       initDefaultRecipient().then(initRec => loadPackagePrices(initRec));
@@ -315,27 +316,28 @@
       amountEl.addEventListener('input', async () => {
         selectedStars = null;
         errorMsg.textContent = '';
-        const v = parseInt(amountEl.value,10);
-        if (isNaN(v) || v<50 || v>1000000) {
-          if (v<50) errorMsg.textContent='Минимум 50 stars';
-          if (v>1000000) errorMsg.textContent='Максимум 1 000 000 stars';
+        const v = parseInt(amountEl.value, 10);
+        if (isNaN(v) || v < 50 || v > 1000000) {
+          if (v < 50) errorMsg.textContent = 'Мин. 50 stars';
+          if (v > 1000000) errorMsg.textContent = 'Макс. 1 000 000 stars';
           priceInline.style.display = 'none';
           return updateBuyBtn();
         }
         if (recipientId) {
           const r = await fetch('/api/price', {
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ recipient: recipientId, quantity: v })
           });
           const d = await r.json();
           if (d.ok) {
-            priceSpan.textContent = fmt(d.amount/1e9);
-            priceInline.style.display = 'flex';
-          }
+            // делим нанотоны на 1e9
+          priceSpan.textContent = fmt(d.amount / 1e9);
+          priceInline.style.display = 'flex';
         }
-        updateBuyBtn();
-      });
+      }
+      updateBuyBtn();
+    });
 
       toggleBtn.onclick = () => {
         expanded = !expanded;
