@@ -1,11 +1,20 @@
-// server.js
 require('dotenv').config();
 const express    = require('express');
+const path       = require('path');
 const axios      = require('axios');
 const cors       = require('cors');
 const bodyParser = require('body-parser');
 
 const app = express();
+
+// 1) Сервим всё из папки public
+app.use(express.static(path.join(__dirname, 'public')));
+
+// 2) Если кто заходит на корень — отдать index.html
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -53,4 +62,4 @@ app.post('/api/price', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server on :${PORT}`));
+app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
