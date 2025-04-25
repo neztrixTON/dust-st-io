@@ -178,16 +178,18 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      const tonUI = new TON_CONNECT_UI.TonConnectUI({
+      // === TON Connect UI ===
+      const ton = new TON_CONNECT_UI.TonConnectUI({
         manifestUrl: '/tonconnect-manifest.json',
         buttonRootId: 'ton-connect'
       });
       let walletConnected = false;
-      tonUI.onStatusChange(() => {
-        walletConnected = tonUI.connected;
+      ton.onStatusChange(() => {
+        walletConnected = ton.connected;
         updateBuyBtn();
       });
-    
+
+      // === Элементы ===
       const usernameEl     = document.getElementById('username');
       const photoEl        = document.getElementById('recipient-photo');
       const nameEl         = document.getElementById('recipient-name');
@@ -196,20 +198,20 @@
       const priceInline    = document.getElementById('amount-price-container');
       const priceSpan      = document.getElementById('amount-price');
       const clearAmtEl     = document.querySelector('#amount ~ .clear-icon');
-      const packageListEl  = document.getElementById('packages');
+      const pkgListEl      = document.getElementById('packages');
       const toggleBtn      = document.getElementById('toggleOptions');
       const buyBtn         = document.getElementById('buyBtn');
       const errorMsg       = document.getElementById('error-msg');
-    
+
       let recipientId    = '';
       let selectedStars  = null;
       let expanded       = false;
       const pkgCounts    = [50,75,100,150,250,350,500,750,1000,1500,2500,5000,10000,25000,35000,50000,100000,150000,500000,1000000];
       const pkgPrices    = {};
       const DEFAULT_USER = 'b77so';
-    
+
       const fmt = v => (+v).toLocaleString('en-US',{minimumFractionDigits:4});
-    
+
       window.clearInput = id => {
         if (id==='username') {
           usernameEl.disabled = false;
@@ -225,8 +227,8 @@
         }
         updateBuyBtn();
       };
-    
-      // 1) получаем default recipientId
+
+      // 1) получаем дефолтного получателя для пакетов
       async function initDefaultRecipient() {
         const res = await fetch('/api/recipient', {
           method:'POST',
@@ -234,14 +236,12 @@
           body: JSON.stringify({ username: DEFAULT_USER })
         });
         const j = await res.json();
-        if (j.ok) {
-          return j.recipient;
-        }
-        return '';
+        return j.ok ? j.recipient : '';
       }
-    
-      // 2) подгружаем цены пакетов по defaultRecipient
+
+      // 2) подгружаем цены пакетов, деля нанотоны на 1e9
       async function loadPackagePrices(defaultRec) {
+        if (!defaultRec) return;
         await Promise.all(pkgCounts.map(q =>
           fetch('/api/price', {
             method:'POST',
@@ -249,16 +249,16 @@
             body: JSON.stringify({ recipient: defaultRec, quantity: q })
           })
           .then(r=>r.json())
-          .then(j=> pkgPrices[q] = j.ok ? (j.amount/1e9) : 0)
+          .then(j=> pkgPrices[q] = j.ok ? j.amount/1e9 : 0)
         ));
         renderPackages();
       }
-    
+
       function renderPackages() {
-        packageListEl.innerHTML = '';
+        pkgListEl.innerHTML = '';
         const list = expanded ? pkgCounts : [50,500,2500];
         list.forEach(stars => {
-          const price = pkgPrices[stars] || 0;
+          const price = pkgPrices[stars]||0;
           const div = document.createElement('div');
           div.className = 'package' + (selectedStars===stars?' selected':'');
           div.innerHTML = `
@@ -270,7 +270,8 @@
               <span>${stars.toLocaleString()} Stars</span>
             </div>
             <div class="price">
-              <img src="ton.svg" class="ton-logo"/><span>${fmt(price)}</span>
+              <img src="ton.svg" class="ton-logo"/>
+              <span>${fmt(price)}</span>
             </div>`;
           div.onclick = () => {
             selectedStars = stars;
@@ -279,16 +280,15 @@
             updateBuyBtn();
             renderPackages();
           };
-          packageListEl.appendChild(div);
+          pkgListEl.appendChild(div);
         });
         toggleBtn.textContent = expanded ? 'Hide More Options ▲' : 'Show More Options ▼';
       }
-    
-      // INIT
-      initDefaultRecipient()
-        .then(defaultRec => loadPackagePrices(defaultRec));
-    
-      // blur username: fetch actual recipient
+
+      // Инициализация цен пакетов
+      initDefaultRecipient().then(initRec => loadPackagePrices(initRec));
+
+      // blur для username — ставим настоящее имя и аватар, очищаем поле
       usernameEl.addEventListener('blur', async () => {
         const u = usernameEl.value.trim();
         if (!u) return;
@@ -302,28 +302,28 @@
           recipientId = j.recipient;
           usernameEl.value = j.name;
           usernameEl.disabled = true;
-          photoEl.src = j.photo; photoEl.style.display='block';
-          nameEl.textContent = j.name; nameEl.style.display='inline';
+          photoEl.src = j.photo; photoEl.style.display = 'block';
+          nameEl.textContent = j.name; nameEl.style.display = 'inline';
           clearUserEl.style.display = 'block';
         } else {
           errorMsg.textContent = 'Пользователь не найден';
         }
         updateBuyBtn();
       });
-    
-      // input amount: fetch price in TON
+
+      // input для amount — запрашиваем цену и делим на 1e9
       amountEl.addEventListener('input', async () => {
         selectedStars = null;
         errorMsg.textContent = '';
         const v = parseInt(amountEl.value,10);
         if (isNaN(v) || v<50 || v>1000000) {
-          if (v<50) errorMsg.textContent='Мин. 50 stars';
-          if (v>1000000) errorMsg.textContent='Макс. 1 000 000 stars';
-          priceInline.style.display='none';
+          if (v<50) errorMsg.textContent='Минимум 50 stars';
+          if (v>1000000) errorMsg.textContent='Максимум 1 000 000 stars';
+          priceInline.style.display = 'none';
           return updateBuyBtn();
         }
         if (recipientId) {
-          const r = await fetch('/api/price',{
+          const r = await fetch('/api/price', {
             method:'POST',
             headers:{'Content-Type':'application/json'},
             body: JSON.stringify({ recipient: recipientId, quantity: v })
@@ -336,13 +336,13 @@
         }
         updateBuyBtn();
       });
-    
+
       toggleBtn.onclick = () => {
         expanded = !expanded;
         renderPackages();
       };
       window.addEventListener('resize', renderPackages);
-    
+
       function updateBuyBtn() {
         const okQty = selectedStars || (+amountEl.value>=50 && +amountEl.value<=1000000);
         const okUser = !!recipientId;
@@ -350,12 +350,12 @@
         buyBtn.disabled = !en;
         buyBtn.classList.toggle('enabled', en);
       }
-    
+
       renderPackages();
       updateBuyBtn();
     });
-    </script>
-    
+  </script>
+
 
 </body>
 </html>
