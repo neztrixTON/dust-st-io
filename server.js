@@ -1,16 +1,11 @@
 require('dotenv').config();
 const express = require('express');
-const path    = require('path');
 const axios   = require('axios');
+const path    = require('path');
 const app     = express();
 
-// Раздаём статику (public, manifest, assets) :contentReference[oaicite:9]{index=9}
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname,'public')));
 app.use(express.json());
-
-app.get('/', (_,res) => {
-  res.sendFile(path.join(__dirname,'public','index.html'));
-});
 
 const TP = 'https://api.tpayer.net';
 const COMMON = {
@@ -22,22 +17,24 @@ const COMMON = {
   'user-agent': 'Mozilla/5.0'
 };
 
-// Поиск получателя
+app.get('/', (_,res) => res.sendFile(path.join(__dirname,'public','index.html')));
+
+// recipient lookup
 app.post('/api/recipient', async (req,res) => {
   try {
     const { username } = req.body;
-    const response = await axios.post(
+    const r = await axios.post(
       `${TP}/searchStarsRecipient`,
       new URLSearchParams({ username }).toString(),
-      { headers: COMMON }                             // urlencoded с помощью URLSearchParams :contentReference[oaicite:10]{index=10}
+      { headers: COMMON }
     );
-    res.json(response.data);
+    return res.json(r.data);
   } catch (e) {
-    res.json({ ok:false, error: e.message });
+    return res.json({ ok:false, error:e.message });
   }
 });
 
-// Получение цены
+// price fetch (returns NANOTON, client divides by 1e9)
 app.post('/api/price', async (req,res) => {
   try {
     const { recipient, quantity } = req.body;
@@ -54,9 +51,9 @@ app.post('/api/price', async (req,res) => {
     );
     return res.json({ ok: link.data.ok, amount: Number(link.data.amount) });
   } catch (e) {
-    return res.json({ ok:false, error: e.message });
+    return res.json({ ok:false, error:e.message });
   }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server listening on ${PORT}`));
+app.listen(PORT, ()=>console.log(`Listening on ${PORT}`));
