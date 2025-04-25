@@ -4,12 +4,10 @@ const axios   = require('axios');
 const path    = require('path');
 const app     = express();
 
-// Раздаём статику (public, включая index.html и manifest)
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname,'public')));
 app.use(express.json());
-
 app.get('/', (_, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(__dirname,'public','index.html'));
 });
 
 const TP   = 'https://api.tpayer.net';
@@ -28,22 +26,20 @@ const HEAD = {
   'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 YaBrowser/25.2.0.0 Safari/537.36'
 };
 
-// Поиск получателя по username
 app.post('/api/recipient', async (req, res) => {
   try {
     const { username } = req.body;
-    const response = await axios.post(
+    const r = await axios.post(
       `${TP}/searchStarsRecipient`,
       new URLSearchParams({ username }).toString(),
       { headers: HEAD }
     );
-    return res.json(response.data);
+    return res.json(r.data);
   } catch (e) {
-    return res.json({ ok: false, error: e.message });
+    return res.json({ ok:false, error:e.message });
   }
 });
 
-// Запрос цены (возвращает amount в нанотонах)
 app.post('/api/price', async (req, res) => {
   try {
     const { recipient, quantity } = req.body;
@@ -52,13 +48,12 @@ app.post('/api/price', async (req, res) => {
       new URLSearchParams({ recipient, quantity }).toString(),
       { headers: HEAD }
     );
-    if (!init.data.ok) return res.json({ ok: false });
-    // Т.к. для цен пакетов и полей нам достаточно первоначального amount
-    return res.json({ ok: true, amount: init.data.amount });
+    if (!init.data.ok) return res.json({ ok:false });
+    return res.json({ ok:true, amount: init.data.amount });
   } catch (e) {
-    return res.json({ ok: false, error: e.message });
+    return res.json({ ok:false, error:e.message });
   }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
+app.listen(PORT, () => console.log(`Server listening on ${PORT}`));
