@@ -6,6 +6,7 @@ const app     = express();
 
 app.use(express.static(path.join(__dirname,'public')));
 app.use(express.json());
+
 app.get('/', (_, res) => {
   res.sendFile(path.join(__dirname,'public','index.html'));
 });
@@ -13,17 +14,9 @@ app.get('/', (_, res) => {
 const TP   = 'https://api.tpayer.net';
 const HEAD = {
   'accept': 'application/json, text/plain, */*',
-  'accept-language': 'ru,en;q=0.9',
   'content-type': 'application/x-www-form-urlencoded',
   'origin': 'https://tpayer.net',
-  'referer': 'https://tpayer.net/',
-  'sec-ch-ua': '"Not A(Brand";v="8", "Chromium";v="132", "YaBrowser";v="25.2", "Yowser";v="2.5"',
-  'sec-ch-ua-mobile': '?0',
-  'sec-ch-ua-platform': '"Windows"',
-  'sec-fetch-dest': 'empty',
-  'sec-fetch-mode': 'cors',
-  'sec-fetch-site': 'same-site',
-  'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 YaBrowser/25.2.0.0 Safari/537.36'
+  'referer': 'https://tpayer.net/'
 };
 
 app.post('/api/recipient', async (req, res) => {
