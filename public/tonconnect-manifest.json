@@ -1,0 +1,9 @@
+{
+  "name": "DUST_IO",
+  "description": "Buy Telegram Stars via TON Connect",
+  "icon": "https://yourdomain.com/icon-192.png",
+  "permissions": ["tonClient"],
+  "hooks": {
+    "connect": "/"
+  }
+}
