@@ -125,7 +125,6 @@
     <a class="link-history" href="#">View Transaction History</a>
   </div>
 
-  <!-- после вашего существующего кода в body -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const ton = new TON_CONNECT_UI.TonConnectUI({
@@ -138,82 +137,123 @@
         updateBuyBtn();
       });
 
-      const usernameEl  = document.getElementById('username');
-      const amountEl    = document.getElementById('amount');
-      const buyBtn      = document.getElementById('buyBtn');
-      const priceSpan   = document.getElementById('amount-price');
-      const priceInline = document.getElementById('amount-price-container');
-      let recipientId   = '';
+      const usernameEl    = document.getElementById('username');
+      const usernameIcon  = document.getElementById('username-icon');
+      const avatarEl      = document.getElementById('avatar');
+      const userErrorEl   = document.getElementById('user-error');
+      const clearUserEl   = document.querySelector('#username ~ .clear-icon');
+      const amountEl      = document.getElementById('amount');
+      const amountErrorEl = document.getElementById('amount-error');
+      const priceInline   = document.getElementById('amount-price-container');
+      const priceSpan     = document.getElementById('amount-price');
+      const buyBtn        = document.getElementById('buyBtn');
 
-      // при вводе количества и пустом получателе — ждём выбора пользователя
-      amountEl.addEventListener('input', () => {
-        refreshButtonLabel();
-      });
+      let recipientId = '';
 
-      // при потере фокуса по username
+      window.clearInput = id => {
+        if (id === 'username') {
+          usernameEl.disabled = false;
+          usernameEl.value = '';
+          recipientId = '';
+          usernameIcon.style.display = 'block';
+          avatarEl.style.display = 'none';
+          userErrorEl.textContent = '';
+          clearUserEl.style.display = 'none';
+        } else {
+          amountEl.value = '';
+          priceInline.style.display = 'none';
+          amountErrorEl.textContent = '';
+        }
+        updateBuyBtn();
+      };
+
       usernameEl.addEventListener('blur', async () => {
         const u = usernameEl.value.trim();
+        console.log('Lookup recipient:', u);
         if (!u) return;
-        // ...существующая логика поиска и показа аватара...
-        // после успешной установки recipientId:
-        // если количество уже введено — триггерим его заново
-        if (amountEl.value) {
-          amountEl.dispatchEvent(new Event('input'));
+        userErrorEl.textContent = '';
+        usernameIcon.src = 'Search.svg';
+        const res = await fetch('/api/recipient', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ username: u })
+        });
+        console.log('/api/recipient status:', res.status);
+        const j = await res.json();
+        console.log('/api/recipient body:', j);
+        if (j.ok) {
+          recipientId = j.recipient;
+          usernameEl.value    = j.name;
+          usernameEl.disabled = true;
+          avatarEl.src        = j.photo;
+          avatarEl.style.display = 'block';
+          clearUserEl.style.display = 'block';
+          if (amountEl.value) amountEl.dispatchEvent(new Event('input'));
+        } else {
+          userErrorEl.textContent = 'User not found';
+          usernameIcon.src = 'error.svg';
         }
+        updateBuyBtn();
       });
 
-      // Обновляем текст на кнопке
-      function refreshButtonLabel() {
+      amountEl.addEventListener('input', async () => {
+        amountErrorEl.textContent = '';
         const v = parseInt(amountEl.value, 10);
-        if (v >= 50 && v <= 1000000) {
-          buyBtn.textContent = `Buy ${v} Stars`;
-        } else {
+        console.log('Fetching price:', v, 'for recipient', recipientId);
+        if (isNaN(v) || v < 50 || v > 1000000) {
+          priceInline.style.display = 'none';
+          if (v < 50) amountErrorEl.textContent = 'Min. 50 stars';
+          if (v > 1000000) amountErrorEl.textContent = 'Max. 1,000,000 stars';
           buyBtn.textContent = 'Buy Stars';
+          return updateBuyBtn();
         }
-      }
+        if (recipientId) {
+          const r = await fetch('/api/price',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ recipient: recipientId, quantity: v }) });
+          const d = await r.json();
+          console.log('/api/price body:', d);
+          if (d.ok) {
+            priceSpan.textContent = parseFloat(d.amount).toFixed(4);
+            priceInline.style.display = 'flex';
+            buyBtn.textContent = `Buy ${v} Stars`;
+          }
+        }
+        updateBuyBtn();
+      });
 
-      // Клик по кнопке «Buy X Stars»
       buyBtn.addEventListener('click', async () => {
         if (!walletConnected || !recipientId) return;
         const qty = parseInt(amountEl.value, 10);
         if (!(qty >= 50 && qty <= 1000000)) return;
-
-        // 1) Запрашиваем у нашего сервера параметры транзакции
+        console.log('Initiating buy:', recipientId, qty);
         const r = await fetch('/api/buy', {
-          method: 'POST',
-          headers: {'Content-Type':'application/json'},
+          method: 'POST', headers: {'Content-Type':'application/json'},
           body: JSON.stringify({ recipient: recipientId, quantity: qty })
         });
         const j = await r.json();
+        console.log('/api/buy body:', j);
         if (!j.ok) {
-          return alert('Ошибка создания транзакции: ' + j.error);
+          return alert('Error creating transaction: ' + j.error);
         }
-
-        // 2) Формируем и отправляем транзакцию через TON Connect
         const tx = {
           validUntil: j.validUntil,
-          messages: [{
-            address: j.address,
-            amount: j.amount,      // уже в nanotons, строкой
-            payload: j.payload     // base64
-          }]
+          messages: [{ address: j.address, amount: j.amount, payload: j.payload }]
         };
         try {
           await ton.sendTransaction(tx);
-          alert('Транзакция отправлена в кошелёк!');
+          alert('Transaction sent to wallet!');
         } catch (e) {
           console.error(e);
-          alert('Ошибка при отправке транзакции: ' + e.message);
+          alert('Send error: ' + e.message);
         }
       });
 
       function updateBuyBtn() {
         const okQty = parseInt(amountEl.value,10) >= 50 && parseInt(amountEl.value,10) <= 1000000;
-        buyBtn.disabled = !(walletConnected && recipientId && okQty);
+        const en = walletConnected && recipientId && okQty;
+        buyBtn.disabled = !en;
+        buyBtn.classList.toggle('enabled', en);
       }
 
-      // Первичная установка
-      refreshButtonLabel();
+      // Инициализация
       updateBuyBtn();
     });
   </script>
