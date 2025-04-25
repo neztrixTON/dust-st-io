@@ -34,7 +34,17 @@
     .logo-title h1 { font-family: 'Anton'; font-size:28px }
     .ton-connect { background:transparent; border:none; padding:8px 12px; border-radius:8px; color:#fff; cursor:pointer }
 
-    .container { max-width:900px; margin:24px auto; padding:0 16px }
+    /* Контейнер фиксированной ширины */
+    .container {
+      width: 100%;
+      max-width: 500px;
+      margin: 24px auto;
+      padding: 0 16px;
+    }
+    @media (max-width: 600px) {
+      .container { max-width: 85%; }
+    }
+
     .intro { text-align:center; margin-bottom:24px }
     .intro h2 { font-size:26px; display:flex; justify-content:center; align-items:center; gap:10px }
     .intro p { color:var(--lightgray); font-size:15px; margin-top:6px }
@@ -42,12 +52,20 @@
 
     label { display:block; margin:16px 0 8px; color:var(--lightgray); font-size:14px }
 
-    .input-wrapper { position:relative; margin-bottom:4px }
+    .input-wrapper { position:relative; margin-bottom:8px }
     .input-wrapper img.icon { position:absolute; top:50%; left:12px; width:25px; height:25px; transform:translateY(-50%) }
+    .input-wrapper img.avatar { position:absolute; top:50%; left:12px; width:32px; height:32px; border-radius:50%; transform:translateY(-50%); display:none }
+
+    /* Увеличенная высота полей */
     input[type="text"], input[type="number"] {
-      width:100%; padding:12px 44px; background:var(--card); border:none; border-radius:8px;
+      width:100%; padding:18px 44px; background:var(--card); border:none; border-radius:8px;
       color:var(--white); font-size:16px; outline:none;
     }
+    /* Убираем стрелки для number input */
+    input[type=number]::-webkit-outer-spin-button,
+    input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0 }
+    input[type=number] { -moz-appearance: textfield }
+
     .clear-icon {
       position:absolute; top:50%; right:12px; transform:translateY(-50%);
       font-size:18px; color:var(--lightgray); cursor:pointer; display:none;
@@ -55,7 +73,7 @@
     input:not(:placeholder-shown) ~ .clear-icon { display:block }
 
     .price-inline {
-      display:flex; align-items:center; gap:6px; padding-right:12px;
+      display:flex; align-items:center; gap:6px;
       position:absolute; top:50%; right:44px; transform:translateY(-50%); display:none;
     }
     .price-inline .ton-logo { width:16px; height:16px }
@@ -89,6 +107,7 @@
     <label for="username">Recipient</label>
     <div class="input-wrapper">
       <img id="username-icon" src="Search.svg" class="icon" alt="icon"/>
+      <img id="avatar" class="avatar" alt="avatar" />
       <input type="text" id="username" placeholder="Telegram username" />
       <div class="clear-icon" onclick="clearInput('username')">×</div>
     </div>
@@ -113,9 +132,9 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // TON Connect
+      // TON Connect (явный абсолютный путь для manifest)
       const ton = new TON_CONNECT_UI.TonConnectUI({
-        manifestUrl: '/tonconnect-manifest.json',
+        manifestUrl: window.location.origin + 'https://dust-st-io-production.up.railway.app/tonconnect-manifest.json',
         buttonRootId: 'ton-connect'
       });
       let walletConnected = false;
@@ -126,6 +145,7 @@
 
       const usernameEl    = document.getElementById('username');
       const usernameIcon  = document.getElementById('username-icon');
+      const avatarEl      = document.getElementById('avatar');
       const userErrorEl   = document.getElementById('user-error');
       const clearUserEl   = document.querySelector('#username ~ .clear-icon');
 
@@ -144,7 +164,8 @@
           usernameEl.disabled = false;
           usernameEl.value = '';
           recipientId = '';
-          usernameIcon.src = 'Search.svg';
+          usernameIcon.style.display = 'block';
+          avatarEl.style.display = 'none';
           userErrorEl.textContent = '';
           clearUserEl.style.display = 'none';
         } else {
@@ -160,6 +181,7 @@
         const u = usernameEl.value.trim();
         if (!u) return;
         userErrorEl.textContent = '';
+        usernameIcon.src = 'Search.svg';
         const res = await fetch('/api/recipient', {
           method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({ username: u })
@@ -169,6 +191,8 @@
           recipientId = j.recipient;
           usernameEl.value  = j.name;
           usernameEl.disabled = true;
+          avatarEl.src = j.photo;
+          avatarEl.style.display = 'block';
           clearUserEl.style.display = 'block';
         } else {
           userErrorEl.textContent = 'User not found';
@@ -191,7 +215,7 @@
           const r = await fetch('/api/price',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ recipient: recipientId, quantity: v }) });
           const d = await r.json();
           if (d.ok) {
-            priceSpan.textContent = (+d.amount/1e9).toLocaleString('en-US',{minimumFractionDigits:4});
+            priceSpan.textContent = (d.amount / 1e9).toString();
             priceInline.style.display = 'flex';
           }
         }
