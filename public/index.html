@@ -2,35 +2,24 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>DUST_IO Stars Shop</title>
-
-  <!-- Google Fonts -->
-  <link
-    href="https://fonts.googleapis.com/css2?family=Rubik:wght@600&family=Anton&display=swap"
-    rel="stylesheet"
-  />
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DUST_IO</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@600&family=Anton&display=swap" rel="stylesheet">
   <!-- TON Connect UI SDK -->
-  <script
-    src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"
-    defer
-  ></script>
-
+  <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
   <style>
-    /* === VARIABLES & GLOBAL RESET === */
     :root {
-      --primary:    #1A2026;
-      --header:     #212932;
-      --card:       #242E38;
-      --blue:       #0096F3;
-      --white:      #ffffff;
-      --gray:       #6c7380;
-      --lightgray:  #a3a9b4;
-      --error:      #e74c3c;
-      --disabled:   #0096F3;
+      --primary: #1A2026;
+      --header: #212932;
+      --card: #242E38;
+      --blue: #0096F3;
+      --white: #ffffff;
+      --gray: #6c7380;
+      --lightgray: #a3a9b4;
+      --error: #e74c3c;
+      --disabled: #0096F3;
     }
-    *, *::before, *::after {
+    * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
@@ -39,10 +28,8 @@
       font-family: 'Rubik', sans-serif;
       background: var(--primary);
       color: var(--white);
-      line-height: 1.5;
     }
-
-    /* Hide number spinner */
+    /* Hide number input spinners */
     input[type=number]::-webkit-outer-spin-button,
     input[type=number]::-webkit-inner-spin-button {
       -webkit-appearance: none;
@@ -51,258 +38,89 @@
     input[type=number] {
       -moz-appearance: textfield;
     }
-
-    /* === HEADER === */
-    header {
-      background: var(--header);
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      width: 100%;
-    }
-    .header-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .logo-title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .logo-title img {
-      width: 50px;
-      height: 50px;
-    }
-    .logo-title h1 {
-      font-family: 'Anton', sans-serif;
-      font-size: 28px;
-      letter-spacing: 1px;
-    }
-    .ton-connect {
-      background: var(--blue);
-      border: none;
-      padding: 8px 12px;
-      border-radius: 8px;
-      color: var(--white);
-      font-weight: bold;
-      cursor: pointer;
-    }
-    .nav {
-      margin-top: 12px;
-      display: flex;
-      gap: 24px;
-      flex-wrap: wrap;
-    }
-    .nav a {
-      color: var(--white);
-      text-decoration: none;
-      padding-bottom: 4px;
-      border-bottom: 2px solid transparent;
-      font-weight: 500;
-    }
-    .nav a.active {
-      border-color: var(--blue);
-    }
-
-    /* === CONTAINER & INTRO === */
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 24px 16px;
-    }
-    .intro {
-      text-align: center;
-      margin-bottom: 24px;
-    }
-    .intro h2 {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 26px;
-    }
-    .intro p {
-      margin-top: 8px;
-      color: var(--lightgray);
-      font-size: 15px;
-    }
-
-    /* === FORM ELEMENTS === */
-    label, .section-title {
-      display: block;
-      margin-top: 20px;
-      margin-bottom: 8px;
-      color: var(--lightgray);
-      font-size: 14px;
-    }
-    .input-wrapper {
-      position: relative;
-      margin-bottom: 12px;
-    }
-    .input-wrapper img {
-      position: absolute;
-      top: 50%;
-      left: 12px;
-      width: 24px;
-      height: 24px;
-      transform: translateY(-50%);
-    }
-    input[type="text"],
-    input[type="number"] {
-      width: 100%;
-      padding: 12px 44px;
-      background: var(--card);
-      border: none;
-      border-radius: 8px;
-      color: var(--white);
-      font-size: 16px;
-      outline: none;
-    }
-    .clear-icon {
-      position: absolute;
-      top: 50%;
-      right: 12px;
-      font-size: 18px;
-      color: var(--lightgray);
-      cursor: pointer;
-      transform: translateY(-50%);
-      display: none;
-    }
-    input:not(:placeholder-shown) ~ .clear-icon {
-      display: block;
-    }
-    .error-text {
-      color: var(--error);
-      font-size: 13px;
-      margin-top: 4px;
-    }
-
     /* Recipient photo & name */
     .recipient-photo {
       position: absolute;
-      top: 50%; left: 40px;
-      width: 24px; height: 24px;
-      border-radius: 50%;
+      top: 50%; left: 36px;
       transform: translateY(-50%);
-      display: none;
+      width: 24px; height: 24px;
+      border-radius: 50%; display: none;
     }
     .recipient-name {
       position: absolute;
-      top: 50%; left: 72px;
+      top: 50%; left: 68px;
       transform: translateY(-50%);
-      font-size: 14px;
+      color: var(--white); font-size: 14px;
       display: none;
     }
-
     /* Inline amount price */
     .price-inline {
       position: absolute;
-      top: 50%; right: 44px;
+      top: 50%; right: 36px;
       transform: translateY(-50%);
       display: none;
-      align-items: center;
-      gap: 4px;
+      align-items: center; gap: 4px;
     }
-    .price-inline .ton-logo {
-      width: 16px; height: 16px;
-    }
+    .price-inline .ton-logo { width: 16px; height: 16px; }
 
-    /* === PACKAGES === */
-    .package-list {
-      margin-top: 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
+    h1 { font-family: 'Anton', sans-serif; font-size: 30px; letter-spacing: 1px; }
+    header { background-color: var(--header); padding: 12px; display: flex; flex-direction: column; width: 100%; }
+    .header-top { display: flex; justify-content: space-between; align-items: center; }
+    .logo-title { display: flex; align-items: center; gap: 3px; }
+    .logo-title img { width: 50px; height: 50px; object-fit: contain; }
+    .nav { display: flex; gap: 24px; margin-top: 12px; flex-wrap: wrap; }
+    .nav a { text-decoration: none; color: var(--white); font-weight: 500; border-bottom: 2px solid transparent; padding-bottom: 4px; }
+    .nav a.active { border-color: var(--blue); }
+    .ton-connect { background: rgba(255, 255, 255, 0); border: none; padding: 10px 8px; border-radius: 8px; color: var(--white); font-weight: bold; cursor: pointer; }
+    .container { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
+    .intro { text-align: center; margin-bottom: 24px; }
+    .intro h2 { font-size: 26px; display: flex; justify-content: center; align-items: center; gap: 10px; }
+    .intro p { color: var(--lightgray); font-size: 15px; margin-top: 6px; }
+    @media (max-width: 600px) {
+      .intro p { display: block; font-size: 14px; }
     }
-    .package {
-      background: var(--card);
-      border: 2px solid transparent;
-      border-radius: 12px;
-      padding: 16px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      cursor: pointer;
-      transition: border-color 0.2s;
+    label, .section-title { display: block; margin-top: 16px; margin-bottom: 8px; color: var(--lightgray); font-size: 14px; }
+    .input-wrapper { position: relative; margin-bottom: 10px; }
+    .input-wrapper img { position: absolute; top: 50%; left: 12px; transform: translateY(-50%); width: 25px; height: 25px; }
+    input[type="text"], input[type="number"] { width: 100%; padding: 12px 44px; background: var(--card); border: none; border-radius: 8px; color: var(--white); font-size: 16px; outline: none; }
+    .error-text { color: var(--error); font-size: 13px; margin-top: 4px; }
+    .clear-icon { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 18px; color: var(--lightgray); cursor: pointer; display: none; }
+    input:not(:placeholder-shown) ~ .clear-icon { display: block; }
+    .package-list { margin-top: 24px; display: flex; flex-direction: column; gap: 14px; }
+    .package { background: var(--card); border: 2px solid transparent; border-radius: 12px; padding: 18px 20px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: 0.3s; flex-wrap: wrap; }
+    .package.selected { border-color: var(--blue); }
+    .left { display: flex; align-items: center; gap: 14px; flex-wrap: nowrap; }
+    .checkbox { width: 20px; height: 20px; border: 2px solid var(--gray); border-radius: 50%; position: relative; }
+    .package.selected .checkbox { border-color: var(--blue); }
+    .checkbox::after { content: ""; width: 10px; height: 10px; background: var(--blue); border-radius: 50%; position: absolute; top: 3px; left: 3px; display: none; }
+    .package.selected .checkbox::after { display: block; }
+    .price { display: flex; align-items: center; gap: 6px; }
+    .ton-logo { width: 20px; height: 20px; }
+    .stars { display: flex; margin-right: 8px; }
+    .stars img { width: 20px; height: 20px; margin-left: -25px; filter: drop-shadow(1px 0 3px rgb(0, 0, 0)); }
+    .stars img:first-child { margin-left: 5px; }
+    .btn-buy { background: var(--disabled); border: none; padding: 16px; width: 100%; height: 50px; margin-top: 24px; font-weight: bold; border-radius: 12px; color: rgb(179, 179, 179); cursor: not-allowed; font-size: 16px; }
+    .btn-buy.enabled { background: var(--blue); color: var(--white); cursor: pointer; }
+    .link-history { display: block; text-align: center; margin-top: 16px; font-size: 14px; color: var(--blue); text-decoration: none; }
+    .show-options { background: var(--card); border-radius: 10px; text-align: center; padding: 20px; height: 55px; margin-top: 20px; font-weight: 500; font-size: 15px; color: var(--blue); cursor: pointer; }
+    @media (min-width: 600px) {
+      .logo-title img { width: 65px; height: 65px; }
+      nav.nav { justify-content: center; align-items: center; margin-top: -45px; }
+      header { height: 90px; }
     }
-    .package.selected {
-      border-color: var(--blue);
+    @media (min-width: 768px) {
+      .logo-title img { width: 70px; height: 70px; }
+      nav.nav { justify-content: center; align-items: center; margin-top: -45px; }
+      header { height: 85px; }
     }
-    .package .left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
+    @media (min-width: 1024px) {
+      .logo-title img { width: 75px; height: 75px; }
+      nav.nav { justify-content: center; align-items: center; margin-top: -45px; }
+      header { height: 95px; }
     }
-    .checkbox {
-      width: 20px; height: 20px;
-      border: 2px solid var(--gray);
-      border-radius: 50%;
-      position: relative;
-    }
-    .package.selected .checkbox {
-      border-color: var(--blue);
-    }
-    .checkbox::after {
-      content: '';
-      position: absolute;
-      top: 3px; left: 3px;
-      width: 10px; height: 10px;
-      background: var(--blue);
-      border-radius: 50%;
-      display: none;
-    }
-    .package.selected .checkbox::after {
-      display: block;
-    }
-    .stars img {
-      width: 20px; height: 20px;
-      margin-left: -24px;
-      filter: drop-shadow(1px 0 2px rgba(0,0,0,0.5));
-    }
-    .stars img:first-child {
-      margin-left: 0;
-    }
-    .price img.ton-logo {
-      width: 20px; height: 20px;
-    }
-
-    /* === BUY BUTTON & HISTORY === */
-    .btn-buy {
-      margin-top: 24px;
-      width: 100%;
-      height: 50px;
-      border: none;
-      border-radius: 12px;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: not-allowed;
-      background: var(--disabled);
-      color: #b3b3b3;
-    }
-    .btn-buy.enabled {
-      background: var(--blue);
-      color: var(--white);
-      cursor: pointer;
-    }
-    .link-history {
-      display: block;
-      text-align: center;
-      margin-top: 16px;
-      color: var(--blue);
-      text-decoration: none;
-      font-size: 14px;
-    }
-
-    /* === SHOW MORE OPTIONS === */
-    .show-options {
-      margin-top: 20px;
-      padding: 16px;
-      background: var(--card);
-      border-radius: 10px;
-      text-align: center;
-      cursor: pointer;
-      font-weight: 500;
-      color: var(--blue);
+    @media (min-width: 1280px) {
+      .logo-title img { width: 75px; height: 75px; }
+      header { height: 95px; }
     }
   </style>
 </head>
@@ -310,10 +128,10 @@
   <header>
     <div class="header-top">
       <div class="logo-title">
-        <img src="logo.png" alt="Logo"/>
+        <img src="logo.png" alt="Logo">
         <h1>DUST_IO</h1>
       </div>
-      <button id="ton-connect" class="ton-connect">Connect Wallet</button>
+      <button class="ton-connect" id="ton-connect"></button>
     </div>
     <nav class="nav">
       <a href="#" class="active">Stars</a>
@@ -322,62 +140,45 @@
     </nav>
   </header>
 
-  <main class="container">
-    <section class="intro">
-      <h2>
-        Buy Telegram Stars
-        <img src="star.svg" alt="star" width="26"/>
-      </h2>
-      <p>Top up Stars balance for yourself or your friends.</p>
-    </section>
+  <div class="container">
+    <div class="intro">
+      <h2>Buy Telegram Stars <img src="star.svg" alt="star" style="width: 26px;" /></h2>
+      <p>Top up Stars Balance for yourself or your friends and colleagues.</p>
+    </div>
 
-    <!-- Recipient -->
     <label for="username">Recipient</label>
     <div class="input-wrapper">
-      <img src="Search.svg" alt="search"/>
-      <input
-        type="text"
-        id="username"
-        placeholder="Telegram username"
-      />
-      <img id="recipient-photo" class="recipient-photo" alt="photo"/>
+      <img src="Search.svg" alt="search">
+      <input type="text" id="username" placeholder="Telegram username" />
+      <img id="recipient-photo" class="recipient-photo" src="" alt="recipient photo" />
       <span id="recipient-name" class="recipient-name"></span>
       <div class="clear-icon" onclick="clearInput('username')">×</div>
     </div>
-    <div id="error-msg" class="error-text"></div>
 
-    <!-- Quantity -->
     <label for="amount">Quantity</label>
     <div class="input-wrapper">
-      <img src="star.svg" alt="star"/>
-      <input
-        type="number"
-        id="amount"
-        placeholder="50 – 1 000 000"
-      />
-      <div id="amount-price-container" class="price-inline">
-        <img src="ton.svg" class="ton-logo" alt="TON"/>
+      <img src="star.svg" alt="star">
+      <input type="number" id="amount" placeholder="Amount from 50 to 1,000,000" />
+      <div class="price-inline" id="amount-price-container">
+        <img src="ton.svg" class="ton-logo" />
         <span id="amount-price"></span>
       </div>
       <div class="clear-icon" onclick="clearInput('amount')">×</div>
     </div>
+    <div id="error-msg" class="error-text"></div>
 
-    <!-- Packages -->
     <p class="section-title">Or select a package</p>
-    <div id="packages" class="package-list"></div>
-    <div id="toggleOptions" class="show-options">
-      Show More Options ▼
-    </div>
+    <div class="package-list" id="packages"></div>
+    <div class="show-options" id="toggleOptions">Show More Options ▼</div>
 
-    <!-- Buy & History -->
-    <button id="buyBtn" class="btn-buy">Buy Stars</button>
-    <a href="#" class="link-history">View Transaction History</a>
-  </main>
+    <button class="btn-buy" id="buyBtn">Buy Stars</button>
+    <a class="link-history" href="#">View Transaction History</a>
+  </div>
 
   <script>
-    // === TON Connect UI ===
+    // TON Connect UI init
     const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-      manifestUrl: '/tonconnect-manifest.json',
+      manifestUrl: 'https://yourdomain.com/tonconnect-manifest.json',
       buttonRootId: 'ton-connect'
     });
     let isWalletConnected = false;
@@ -386,150 +187,173 @@
       updateBuyBtn();
     });
 
-    // === ELEMENTS & STATE ===
-    const usernameInput  = document.getElementById('username');
-    const amountInput    = document.getElementById('amount');
-    const buyBtn         = document.getElementById('buyBtn');
-    const packagesEl     = document.getElementById('packages');
-    const toggleBtn      = document.getElementById('toggleOptions');
-    const photoEl        = document.getElementById('recipient-photo');
-    const nameEl         = document.getElementById('recipient-name');
-    const priceEl        = document.getElementById('amount-price');
-    const priceContainer = document.getElementById('amount-price-container');
-    const errorMsg       = document.getElementById('error-msg');
+    // Data & elements
+    const packages = [
+      { stars: 50, price: 0.2376 }, { stars: 75, price: 0.3564 }, { stars: 100, price: 0.4752 },
+      { stars: 150, price: 0.7129 }, { stars: 250, price: 1.1882 }, { stars: 350, price: 1.6635 },
+      { stars: 500, price: 2.3765 }, { stars: 750, price: 3.5647 }, { stars: 1000, price: 4.7530 },
+      { stars: 1500, price: 7.1295 }, { stars: 2500, price: 11.8825 }, { stars: 5000, price: 23.7650 },
+      { stars: 10000, price: 47.4537 }, { stars: 25000, price: 118.6342 }, { stars: 35000, price: 166.0879 },
+      { stars: 50000, price: 237.2685 }, { stars: 100000, price: 474.5370 }, { stars: 150000, price: 711.8055 },
+      { stars: 500000, price: 2372.6851 }, { stars: 1000000, price: 4745.3702 }
+    ];
+    const defaultStars = [50, 500, 2500];
+    const sortedPackages = [...packages].sort((a, b) => a.stars - b.stars);
+    const packageList = document.getElementById('packages');
+    const toggleBtn = document.getElementById('toggleOptions');
+    const buyBtn = document.getElementById('buyBtn');
+    const usernameInput = document.getElementById('username');
+    const amountInput = document.getElementById('amount');
+    const recipientPhotoEl = document.getElementById('recipient-photo');
+    const recipientNameEl = document.getElementById('recipient-name');
+    const amountPriceContainer = document.getElementById('amount-price-container');
+    const amountPriceEl = document.getElementById('amount-price');
+    const errorMsg = document.getElementById('error-msg');
+    let selectedStars = null, isExpanded = false, recipientId = '';
 
-    let recipientId     = '';
-    let selectedStars   = null;
-    let isExpanded      = false;
-
-    // === DATA ===
-    const packagesData = [50,75,100,150,250,350,500,750,1000,1500,2500,5000,10000,25000,35000,50000,100000,150000,500000,1000000];
-    const defaultSet = [50,500,2500];
-
-    // === HELPERS ===
-    function fmt(num) {
-      return num.toLocaleString('en-US', {minimumFractionDigits:4});
+    // Utils
+    function formatPrice(price) {
+      return price.toLocaleString('en-US', { minimumFractionDigits: 4 });
     }
-    function clearInput(id) {
-      const el = document.getElementById(id);
-      el.value = '';
-      if (id==='username') {
-        recipientId = ''; photoEl.style.display='none'; nameEl.style.display='none';
-      } else {
-        priceContainer.style.display='none';
+    function getStarsLabel(num) {
+      if (window.innerWidth < 768) {
+        return num >= 1000000 ? `${num/1000000}M` :
+               num >= 1000   ? `${num/1000}K`  : num.toLocaleString();
       }
-      el.focus(); updateBuyBtn();
+      return num.toLocaleString();
+    }
+    function getStarIcons() {
+      return '<img src="star.svg" alt=""><img src="star.svg" alt=""><img src="star.svg" alt="">';
     }
 
-    // === RENDER PACKAGES ===
-    function render(list) {
-      packagesEl.innerHTML = '';
-      list.forEach(n => {
+    // Render packages
+    function renderPackages(items) {
+      packageList.innerHTML = '';
+      items.forEach(({ stars, price }) => {
         const div = document.createElement('div');
-        div.className = 'package' + (selectedStars===n ? ' selected' : '');
+        div.className = 'package';
+        div.dataset.stars = stars;
+        if (selectedStars === stars) div.classList.add('selected');
         div.innerHTML = `
           <div class="left">
             <div class="checkbox"></div>
-            <div class="stars">
-              <img src="star.svg" alt=""/><img src="star.svg" alt=""/><img src="star.svg" alt=""/>
-            </div>
-            <span>${n.toLocaleString()} Stars</span>
+            <div class="stars">${getStarIcons()}</div>
+            <span>${getStarsLabel(stars)} Stars</span>
           </div>
           <div class="price">
-            <img src="ton.svg" class="ton-logo" alt="TON"/>
-            <span>${fmt(packagesData.find(x=>x===n)*0.004752)}</span>
-          </div>`;
+            <img src="ton.svg" class="ton-logo" />
+            <span>${formatPrice(price)}</span>
+          </div>
+        `;
         div.onclick = () => {
-          selectedStars = n;
+          selectedStars = stars;
           amountInput.value = '';
-          priceContainer.style.display = 'none';
+          amountPriceContainer.style.display = 'none';
           updateBuyBtn();
-          render(isExpanded ? packagesData : defaultSet);
+          renderPackages(isExpanded ? sortedPackages : packages.filter(p => defaultStars.includes(p.stars)));
         };
-        packagesEl.appendChild(div);
+        packageList.appendChild(div);
       });
     }
 
-    // === FETCH RECIPIENT ===
-    async function fetchRecipient() {
+    // Fetch recipient
+    async function fetchRecipient(username) {
       const res = await fetch('/api/recipient', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({username: usernameInput.value.trim()})
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ username })
       });
       const data = await res.json();
-      if(data.ok) {
+      if (data.ok) {
         recipientId = data.recipient;
-        photoEl.src = data.photo; photoEl.style.display='block';
-        nameEl.textContent = data.name; nameEl.style.display='inline';
+        recipientPhotoEl.src = data.photo;
+        recipientNameEl.textContent = data.name;
+        recipientPhotoEl.style.display = 'block';
+        recipientNameEl.style.display = 'inline';
       } else {
-        recipientId=''; photoEl.style.display='none'; nameEl.style.display='none';
+        recipientId = '';
+        recipientPhotoEl.style.display = 'none';
+        recipientNameEl.style.display = 'none';
       }
       updateBuyBtn();
     }
 
-    // === FETCH PRICE ===
-    async function fetchPrice(q) {
-      if(!recipientId) return null;
+    // Fetch price
+    async function fetchPrice(quantity) {
+      if (!recipientId) return null;
       const res = await fetch('/api/price', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({recipient:recipientId,quantity:q})
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ recipient: recipientId, quantity })
       });
       const data = await res.json();
       return data.ok ? data.amount : null;
     }
 
-    // === UPDATE BUY BUTTON ===
-    async function updateBuyBtn() {
-      const user  = usernameInput.value.trim();
-      const qty   = parseInt(amountInput.value);
-      let label   = selectedStars
-        ? `Buy ${selectedStars.toLocaleString()} Stars`
-        : (!isNaN(qty) ? `Buy ${qty.toLocaleString()} Stars` : 'Buy Stars');
-
-      buyBtn.textContent = label;
-
-      const validQty = selectedStars || (qty>=50 && qty<=1000000);
-      const enabled  = isWalletConnected && user && validQty;
-      buyBtn.classList.toggle('enabled', enabled);
-      buyBtn.disabled = !enabled;
+    // Clear input
+    function clearInput(id) {
+      const el = document.getElementById(id);
+      el.value = '';
+      if (id === 'username') {
+        recipientId = '';
+        recipientPhotoEl.style.display = 'none';
+        recipientNameEl.style.display = 'none';
+      } else if (id === 'amount') {
+        amountPriceContainer.style.display = 'none';
+      }
+      el.focus();
+      updateBuyBtn();
     }
 
-    // === VALIDATE & PRICE ON INPUT ===
-    amountInput.addEventListener('input', async () => {
+    // Update Buy button
+    function updateBuyBtn() {
+      const username = usernameInput.value.trim();
+      const amount = parseInt(amountInput.value);
+      let label = 'Buy Stars';
+      if (selectedStars) label = `Buy ${selectedStars.toLocaleString()} Telegram Stars`;
+      else if (!isNaN(amount)) label = `Buy ${amount.toLocaleString()} Telegram Stars`;
+      buyBtn.textContent = label;
+      const valid = isWalletConnected && username && ((amount >= 50 && amount <= 1000000) || selectedStars);
+      buyBtn.classList.toggle('enabled', valid);
+      buyBtn.disabled = !valid;
+    }
+
+    // Validate amount
+    function validateAmount() {
       const val = parseInt(amountInput.value);
       selectedStars = null;
       errorMsg.textContent = '';
-      if (isNaN(val)) return updateBuyBtn();
-      if (val < 50) errorMsg.textContent = 'Min 50 stars';
-      if (val > 1000000) errorMsg.textContent = 'Max 1 000 000 stars';
-      if (!errorMsg.textContent && recipientId) {
-        const p = await fetchPrice(val);
-        if (p) {
-          priceEl.textContent = p.toLocaleString('en-US', {minimumFractionDigits:4});
-          priceContainer.style.display = 'flex';
-        }
-      }
+      if (isNaN(val)) return;
+      if (val < 50) errorMsg.textContent = 'You can buy a minimum of 50 stars';
+      else if (val > 1000000) errorMsg.textContent = 'You can buy a maximum of 1,000,000 stars';
       updateBuyBtn();
-    });
-    usernameInput.addEventListener('blur', fetchRecipient);
+    }
 
-    // === TOGGLE PACKAGES ===
+    // Events
+    usernameInput.addEventListener('blur', () => {
+      const uname = usernameInput.value.trim();
+      if (uname) fetchRecipient(uname);
+    });
+    amountInput.addEventListener('input', async () => {
+      validateAmount();
+      const val = parseInt(amountInput.value);
+      if (!isNaN(val) && recipientId) {
+        const price = await fetchPrice(val);
+        amountPriceEl.textContent = price ? formatPrice(price) : '';
+        amountPriceContainer.style.display = price ? 'flex' : 'none';
+      }
+    });
     toggleBtn.onclick = () => {
       isExpanded = !isExpanded;
-      render(isExpanded ? packagesData : defaultSet);
-      toggleBtn.textContent = isExpanded
-        ? 'Hide More Options ▲'
-        : 'Show More Options ▼';
+      renderPackages(isExpanded ? sortedPackages : packages.filter(p => defaultStars.includes(p.stars)));
+      toggleBtn.textContent = isExpanded ? 'Hide More Options ▲' : 'Show More Options ▼';
     };
-
     window.addEventListener('resize', () => {
-      render(isExpanded ? packagesData : defaultSet);
+      renderPackages(isExpanded ? sortedPackages : packages.filter(p => defaultStars.includes(p.stars)));
     });
 
-    // === INITIALIZE ===
-    render(defaultSet);
+    // Initial render
+    renderPackages(defaultStars.map(n => packages.find(p => p.stars === n)));
   </script>
 </body>
 </html>
