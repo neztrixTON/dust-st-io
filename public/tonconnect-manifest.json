@@ -1,9 +1,5 @@
 {
+  "url": "https://dust-st-io-production.up.railway.app/",
   "name": "DUST_IO",
-  "description": "Buy Telegram Stars via TON Connect",
-  "icon": "https://github.com/neztrixTON/dust-st-io/blob/b0f7c5b9cf08605ad55e083b8939bd329cbc4db6/public/logo.png",
-  "permissions": ["tonClient"],
-  "hooks": {
-    "connect": "/"
-  }
+  "iconUrl": "https://github.com/neztrixTON/dust-st-io/blob/b0f7c5b9cf08605ad55e083b8939bd329cbc4db6/public/logo.png",
 }
