@@ -1,0 +1,8 @@
+[project]
+  name = "dust-io-stars"
+
+[build]
+  install = "npm install"
+
+[dev]
+  start = "npm start"
