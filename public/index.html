@@ -204,8 +204,8 @@
           const r = await fetch('/api/price',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ recipient: recipientId, quantity: v }) });
           const d = await r.json();
           if (d.ok) {
-            // Форматируем цену с 4 десятичными, избегая экспоненциальной записи
-            priceSpan.textContent = (d.amount / 1e9).toFixed(4);
+            // Используем parseFloat без деления, форматируем до 4 знаков
+            priceSpan.textContent = parseFloat(d.amount).toFixed(4);
             priceInline.style.display = 'flex';
           }
         }
