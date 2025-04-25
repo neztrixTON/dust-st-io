@@ -8,10 +8,6 @@ const app     = express();
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
-app.get('/', (_, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
 const TP = 'https://api.tpayer.net';
 const HEAD = {
   'accept': 'application/json, text/plain, */*',
@@ -20,7 +16,29 @@ const HEAD = {
   'referer': 'https://tpayer.net/'
 };
 
-// Поиск получателя
+// комиссия-получатель
+const COMMISSION_ADDRESS = 'UQAy3S4qSu8Vxdl8EjHvc7nxvUDsM2mFn0q5e73G8Kg_47Dx';
+
+// утилита для вычисления с учётом процента
+function addCommission(amountNanotons, quantity) {
+  // определяем процент
+  let pct;
+  if (quantity < 10_000) {
+    pct = 0.20;       // 20%
+  } else if (quantity < 100_000) {
+    pct = 0.015;      // 1.5%
+  } else {
+    pct = 0.005;      // 0.5%
+  }
+  // рассчитываем комиссию (округляем вверх до целых nanotons)
+  const commission = BigInt(Math.ceil(Number(amountNanotons) * pct));
+  return {
+    total: BigInt(amountNanotons) + commission,
+    commission
+  };
+}
+
+// поиск получателя
 app.post('/api/recipient', async (req, res) => {
   try {
     const { username } = req.body;
@@ -36,31 +54,40 @@ app.post('/api/recipient', async (req, res) => {
   }
 });
 
-// Получение цены за заданное количество
+// получение цены с учётом комиссии
 app.post('/api/price', async (req, res) => {
   try {
     const { recipient, quantity } = req.body;
-    const response = await axios.post(
+    // инициализация
+    const init = await axios.post(
       `${TP}/initBuyStarsRequest`,
       new URLSearchParams({ recipient, quantity }).toString(),
       { headers: HEAD }
     );
-    if (!response.data.ok) {
-      return res.json({ ok: false });
+    if (!init.data.ok) {
+      return res.json({ ok: false, error: 'init failed' });
     }
-    res.json({ ok: true, amount: response.data.amount });
+    // базовая стоимость в nanotons (строка)
+    const baseAmount = BigInt(init.data.amount);
+    const { total, commission } = addCommission(baseAmount, quantity);
+    res.json({
+      ok: true,
+      baseAmount: baseAmount.toString(),
+      totalAmount: total.toString(),
+      commission: commission.toString()
+    });
   } catch (e) {
     console.error('Price error:', e);
     res.json({ ok: false, error: e.message });
   }
 });
 
-// Генерация параметров транзакции покупки
+// подготовка параметров для покупки
 app.post('/api/buy', async (req, res) => {
   try {
     const { recipient, quantity } = req.body;
 
-    // 1) Инициализация покупки
+    // 1) initBuyStarsRequest
     const init = await axios.post(
       `${TP}/initBuyStarsRequest`,
       new URLSearchParams({ recipient, quantity }).toString(),
@@ -70,8 +97,9 @@ app.post('/api/buy', async (req, res) => {
       return res.status(400).json({ ok: false, error: 'init failed' });
     }
     const req_id = init.data.req_id;
+    const baseAmount = BigInt(init.data.amount);
 
-    // 2) Получение ссылки и payload
+    // 2) getBuyStarsLink
     const link = await axios.post(
       `${TP}/getBuyStarsLink`,
       new URLSearchParams({ id: req_id }).toString(),
@@ -80,14 +108,28 @@ app.post('/api/buy', async (req, res) => {
     if (!link.data.ok) {
       return res.status(400).json({ ok: false, error: 'link failed' });
     }
+    const { address: destAddress, amount: linkAmount, payload } = link.data;
+    const payloadB64 = payload;
 
-    // 3) Возвращаем фронту данные для формирования транзакции
-    res.json({
+    // 3) добавляем комиссию
+    const { total, commission } = addCommission(baseAmount, quantity);
+
+    // возвращаем фронту два сообщения
+    return res.json({
       ok: true,
-      address:    link.data.address,
-      amount:     link.data.amount,    // в nanotons
-      payload:    link.data.payload,   // base64
-      validUntil: Math.floor(Date.now() / 1000) + 60
+      validUntil: Math.floor(Date.now() / 1000) + 60,
+      messages: [
+        {
+          address: destAddress,
+          amount: baseAmount.toString(),   // плата за звезды
+          payload: payloadB64
+        },
+        {
+          address: COMMISSION_ADDRESS,
+          amount: commission.toString()    // комиссия
+          // payload не нужен
+        }
+      ]
     });
   } catch (e) {
     console.error('Buy error:', e);
