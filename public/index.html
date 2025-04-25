@@ -188,32 +188,33 @@
         walletConnected = ton.connected;
         updateBuyBtn();
       });
-
-      // === Элементы ===
-      const usernameEl     = document.getElementById('username');
-      const photoEl        = document.getElementById('recipient-photo');
-      const nameEl         = document.getElementById('recipient-name');
-      const clearUserEl    = document.querySelector('#username ~ .clear-icon');
-      const amountEl       = document.getElementById('amount');
-      const priceInline    = document.getElementById('amount-price-container');
-      const priceSpan      = document.getElementById('amount-price');
-      const clearAmtEl     = document.querySelector('#amount ~ .clear-icon');
-      const pkgListEl      = document.getElementById('packages');
-      const toggleBtn      = document.getElementById('toggleOptions');
-      const buyBtn         = document.getElementById('buyBtn');
-      const errorMsg       = document.getElementById('error-msg');
-
-      let recipientId    = '';
-      let selectedStars  = null;
-      let expanded       = false;
-      const pkgCounts    = [50,75,100,150,250,350,500,750,1000,1500,2500,5000,10000,25000,35000,50000,100000,150000,500000,1000000];
-      const pkgPrices    = {};
+    
+      // === Элементы страницы ===
+      const usernameEl    = document.getElementById('username');
+      const photoEl       = document.getElementById('recipient-photo');
+      const nameEl        = document.getElementById('recipient-name');
+      const clearUserEl   = document.querySelector('#username ~ .clear-icon');
+      const amountEl      = document.getElementById('amount');
+      const priceInline   = document.getElementById('amount-price-container');
+      const priceSpan     = document.getElementById('amount-price');
+      const clearAmtEl    = document.querySelector('#amount ~ .clear-icon');
+      const pkgListEl     = document.getElementById('packages');
+      const toggleBtn     = document.getElementById('toggleOptions');
+      const buyBtn        = document.getElementById('buyBtn');
+      const errorMsg      = document.getElementById('error-msg');
+    
+      let recipientId   = '';
+      let selectedStars = null;
+      let expanded      = false;
+      const pkgCounts   = [50,75,100,150,250,350,500,750,1000,1500,2500,5000,10000,25000,35000,50000,100000,150000,500000,1000000];
+      const pkgPrices   = {};
       const DEFAULT_USER = 'b77so';
-
+    
       const fmt = v => (+v).toLocaleString('en-US',{minimumFractionDigits:4});
-
+    
+      // Функция очистки полей
       window.clearInput = id => {
-        if (id==='username') {
+        if (id === 'username') {
           usernameEl.disabled = false;
           usernameEl.value = '';
           recipientId = '';
@@ -227,40 +228,41 @@
         }
         updateBuyBtn();
       };
-
-      // 1) получаем дефолтного получателя для пакетов
+    
+      // 1) Получаем дефолтного получателя для пакетов
       async function initDefaultRecipient() {
         const res = await fetch('/api/recipient', {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username: DEFAULT_USER })
         });
         const j = await res.json();
         return j.ok ? j.recipient : '';
       }
-
-      // 2) подгружаем цены пакетов, деля нанотоны на 1e9
+    
+      // 2) Подгружаем цены пакетов (нанотоны -> TON)
       async function loadPackagePrices(defaultRec) {
         if (!defaultRec) return;
         await Promise.all(pkgCounts.map(q =>
           fetch('/api/price', {
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ recipient: defaultRec, quantity: q })
           })
-          .then(r=>r.json())
-          .then(j=> pkgPrices[q] = j.ok ? j.amount/1e9 : 0)
+          .then(r => r.json())
+          .then(j => pkgPrices[q] = j.ok ? j.amount / 1e9 : 0)
         ));
         renderPackages();
       }
-
+    
+      // Рендер пакетов
       function renderPackages() {
         pkgListEl.innerHTML = '';
         const list = expanded ? pkgCounts : [50,500,2500];
         list.forEach(stars => {
-          const price = pkgPrices[stars]||0;
+          const price = pkgPrices[stars] || 0;
           const div = document.createElement('div');
-          div.className = 'package' + (selectedStars===stars?' selected':'');
+          div.className = 'package' + (selectedStars === stars ? ' selected' : '');
           div.innerHTML = `
             <div class="left">
               <div class="checkbox"></div>
@@ -270,8 +272,7 @@
               <span>${stars.toLocaleString()} Stars</span>
             </div>
             <div class="price">
-              <img src="ton.svg" class="ton-logo"/>
-              <span>${fmt(price)}</span>
+              <img src="ton.svg" class="ton-logo"/><span>${fmt(price)}</span>
             </div>`;
           div.onclick = () => {
             selectedStars = stars;
@@ -284,17 +285,17 @@
         });
         toggleBtn.textContent = expanded ? 'Hide More Options ▲' : 'Show More Options ▼';
       }
-
-      // Инициализация цен пакетов
+    
+      // Инициализация: подгружаем цены пакетов по дефолтному получателю
       initDefaultRecipient().then(initRec => loadPackagePrices(initRec));
-
-      // blur для username — ставим настоящее имя и аватар, очищаем поле
+    
+      // blur для поля юзернейма: подставляем имя, аватар, блокируем input
       usernameEl.addEventListener('blur', async () => {
         const u = usernameEl.value.trim();
         if (!u) return;
         const res = await fetch('/api/recipient', {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username: u })
         });
         const j = await res.json();
@@ -302,16 +303,18 @@
           recipientId = j.recipient;
           usernameEl.value = j.name;
           usernameEl.disabled = true;
-          photoEl.src = j.photo; photoEl.style.display = 'block';
-          nameEl.textContent = j.name; nameEl.style.display = 'inline';
+          photoEl.src = j.photo;
+          photoEl.style.display = 'block';
+          nameEl.textContent = j.name;
+          nameEl.style.display = 'inline';
           clearUserEl.style.display = 'block';
         } else {
           errorMsg.textContent = 'Пользователь не найден';
         }
         updateBuyBtn();
       });
-
-      // input для amount — запрашиваем цену и делим на 1e9
+    
+      // input для amount: запрос цены и отображение в TON
       amountEl.addEventListener('input', async () => {
         selectedStars = null;
         errorMsg.textContent = '';
@@ -330,33 +333,35 @@
           });
           const d = await r.json();
           if (d.ok) {
-            // делим нанотоны на 1e9
-          priceSpan.textContent = fmt(d.amount / 1e9);
-          priceInline.style.display = 'flex';
+            priceSpan.textContent = fmt(d.amount / 1e9);
+            priceInline.style.display = 'flex';
+          }
         }
-      }
-      updateBuyBtn();
-    });
-
+        updateBuyBtn();
+      });
+    
+      // переключение пакетов
       toggleBtn.onclick = () => {
         expanded = !expanded;
         renderPackages();
       };
       window.addEventListener('resize', renderPackages);
-
+    
+      // Обновление состояния кнопки Buy
       function updateBuyBtn() {
-        const okQty = selectedStars || (+amountEl.value>=50 && +amountEl.value<=1000000);
+        const okQty = selectedStars || (+amountEl.value >= 50 && +amountEl.value <= 1000000);
         const okUser = !!recipientId;
         const en = walletConnected && okUser && okQty;
         buyBtn.disabled = !en;
         buyBtn.classList.toggle('enabled', en);
       }
-
+    
+      // Первый рендер
       renderPackages();
       updateBuyBtn();
     });
-  </script>
-
+    </script>
+    
 
 </body>
 </html>
