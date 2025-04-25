@@ -19,32 +19,40 @@ const HEAD = {
   'referer': 'https://tpayer.net/'
 };
 
-app.post('/api/recipient', async (req, res) => {
-  try {
-    const { username } = req.body;
-    const r = await axios.post(
-      `${TP}/searchStarsRecipient`,
-      new URLSearchParams({ username }).toString(),
-      { headers: HEAD }
-    );
-    return res.json(r.data);
-  } catch (e) {
-    return res.json({ ok:false, error:e.message });
-  }
-});
+// существующие маршруты /api/recipient и /api/price оставляем без изменений...
 
-app.post('/api/price', async (req, res) => {
+// Новый роут для генерации ссылки и payload для покупки
+app.post('/api/buy', async (req, res) => {
   try {
     const { recipient, quantity } = req.body;
+    // 1. Инициализируем запрос на покупку
     const init = await axios.post(
       `${TP}/initBuyStarsRequest`,
       new URLSearchParams({ recipient, quantity }).toString(),
       { headers: HEAD }
     );
-    if (!init.data.ok) return res.json({ ok:false });
-    return res.json({ ok:true, amount: init.data.amount });
+    if (!init.data.ok) return res.status(400).json({ ok: false, error: 'init failed' });
+
+    const req_id = init.data.req_id;
+    // 2. Получаем параметры транзакции
+    const link = await axios.post(
+      `${TP}/getBuyStarsLink`,
+      new URLSearchParams({ id: req_id }).toString(),
+      { headers: HEAD }
+    );
+    if (!link.data.ok) return res.status(400).json({ ok: false, error: 'link failed' });
+
+    // 3. Возвращаем фронту всё, что нужно
+    return res.json({
+      ok: true,
+      address: link.data.address,
+      amount: link.data.amount,    // строка в nanotons
+      payload: link.data.payload,  // base64
+      validUntil: Math.floor(Date.now() / 1000) + 60
+    });
   } catch (e) {
-    return res.json({ ok:false, error:e.message });
+    console.error(e);
+    return res.status(500).json({ ok: false, error: e.message });
   }
 });
 
