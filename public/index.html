@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,9 +7,8 @@
 
   <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@600&family=Anton&display=swap" rel="stylesheet">
 
-  <!-- TON Connect manifest -->
+  <!-- Manifest TON Connect -->
   <link rel="manifest" href="/tonconnect-manifest.json">
-
   <!-- TON Connect UI SDK -->
   <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js" defer></script>
 
@@ -29,15 +28,10 @@
     body { font-family: 'Rubik', sans-serif; background: var(--primary); color: var(--white) }
     .error-text { color: var(--error); font-size: 13px; margin-top: 4px }
 
-    input[type=number]::-webkit-outer-spin-button,
-    input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0 }
-    input[type=number] { -moz-appearance: textfield }
-
     header { background: var(--header); padding:12px; display:flex; justify-content:space-between; align-items:center }
     .logo-title { display:flex; align-items:center; gap:8px }
     .logo-title img { width:50px; height:50px }
     .logo-title h1 { font-family: 'Anton'; font-size:28px }
-
     .ton-connect { background:transparent; border:none; padding:8px 12px; border-radius:8px; color:#fff; cursor:pointer }
 
     .container { max-width:900px; margin:24px auto; padding:0 16px }
@@ -46,7 +40,7 @@
     .intro p { color:var(--lightgray); font-size:15px; margin-top:6px }
     .link-history { display:block; text-align:center; margin-top:16px; font-size:14px; color:var(--blue); text-decoration:none }
 
-    label, .section-title { display:block; margin:16px 0 8px; color:var(--lightgray); font-size:14px }
+    label { display:block; margin:16px 0 8px; color:var(--lightgray); font-size:14px }
 
     .input-wrapper { position:relative; margin-bottom:4px }
     .input-wrapper img.icon { position:absolute; top:50%; left:12px; width:25px; height:25px; transform:translateY(-50%) }
@@ -60,29 +54,11 @@
     }
     input:not(:placeholder-shown) ~ .clear-icon { display:block }
 
-    .package-list { margin-top:24px; display:flex; flex-direction:column; gap:14px }
-    .package {
-      background:var(--card); border:2px solid transparent; border-radius:12px;
-      padding:18px 20px; display:flex; align-items:center; justify-content:space-between;
-      cursor:pointer; transition:0.3s;
+    .price-inline {
+      display:flex; align-items:center; gap:6px; padding-right:12px;
+      position:absolute; top:50%; right:44px; transform:translateY(-50%); display:none;
     }
-    .package.selected { border-color:var(--blue) }
-    .left { display:flex; align-items:center; gap:14px }
-    .checkbox {
-      width:20px; height:20px; border:2px solid var(--gray); border-radius:50%; position:relative;
-    }
-    .checkbox::after {
-      content:""; width:10px; height:10px; background:var(--blue);
-      border-radius:50%; position:absolute; top:3px; left:3px; display:none;
-    }
-    .package.selected .checkbox::after { display:block }
-
-    .stars { display:flex; margin-right:8px }
-    .stars img {
-      width:20px; height:20px; margin-left:-25px;
-      filter:drop-shadow(1px 0 3px rgb(0,0,0));
-    }
-    .stars img:first-child { margin-left:5px }
+    .price-inline .ton-logo { width:16px; height:16px }
 
     .btn-buy {
       background:var(--disabled); border:none; padding:16px; width:100%; height:50px;
@@ -91,12 +67,6 @@
     }
     .btn-buy.enabled {
       background:var(--blue); color:var(--white); cursor:pointer;
-    }
-
-    .show-options {
-      background:var(--card); border-radius:10px; text-align:center; padding:20px;
-      height:55px; margin-top:20px; font-weight:500; font-size:15px; color:var(--blue);
-      cursor:pointer;
     }
   </style>
 </head>
@@ -112,34 +82,30 @@
   <div class="container">
     <div class="intro">
       <h2>Buy Telegram Stars <img src="star.svg" alt="star" style="width:26px"/></h2>
-      <p>Top up Stars Balance for yourself or your friends and colleagues.</p>
+      <p>Top up Stars Balance for yourself or your friends.</p>
     </div>
 
-    <!-- Recipient field -->
+    <!-- Recipient -->
     <label for="username">Recipient</label>
     <div class="input-wrapper">
-      <img id="username-icon" src="Search.svg" class="icon" alt="search icon"/>
-      <input type="text" id="username" placeholder="Telegram username"/>
+      <img id="username-icon" src="Search.svg" class="icon" alt="icon"/>
+      <input type="text" id="username" placeholder="Telegram username" />
       <div class="clear-icon" onclick="clearInput('username')">×</div>
     </div>
     <div id="user-error" class="error-text"></div>
 
-    <!-- Quantity field -->
+    <!-- Quantity -->
     <label for="amount">Quantity</label>
     <div class="input-wrapper">
-      <img src="star.svg" class="icon" alt="star icon"/>
-      <input type="number" id="amount" placeholder="Amount from 50 to 1,000,000"/>
+      <img src="star.svg" class="icon" alt="icon"/>
+      <input type="number" id="amount" placeholder="Amount from 50 to 1,000,000" />
       <div class="clear-icon" onclick="clearInput('amount')">×</div>
-      <div class="price-inline" id="amount-price-container" style="display:none">
+      <div class="price-inline" id="amount-price-container">
         <img src="ton.svg" class="ton-logo" alt="TON"/>
         <span id="amount-price"></span>
       </div>
     </div>
     <div id="amount-error" class="error-text"></div>
-
-    <p class="section-title">Or select a package</p>
-    <div class="package-list" id="packages"></div>
-    <div class="show-options" id="toggleOptions">Show More Options ▼</div>
 
     <button class="btn-buy" id="buyBtn">Buy Stars</button>
     <a class="link-history" href="#">View Transaction History</a>
@@ -147,7 +113,7 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // === TON Connect UI init ===
+      // TON Connect
       const ton = new TON_CONNECT_UI.TonConnectUI({
         manifestUrl: '/tonconnect-manifest.json',
         buttonRootId: 'ton-connect'
@@ -158,117 +124,52 @@
         updateBuyBtn();
       });
 
-      // === Elements ===
-      const usernameEl      = document.getElementById('username');
-      const usernameIcon    = document.getElementById('username-icon');
-      const userErrorEl     = document.getElementById('user-error');
-      const clearUserEl     = document.querySelector('#username ~ .clear-icon');
+      const usernameEl    = document.getElementById('username');
+      const usernameIcon  = document.getElementById('username-icon');
+      const userErrorEl   = document.getElementById('user-error');
+      const clearUserEl   = document.querySelector('#username ~ .clear-icon');
 
-      const amountEl        = document.getElementById('amount');
-      const amountErrorEl   = document.getElementById('amount-error');
-      const priceInline     = document.getElementById('amount-price-container');
-      const priceSpan       = document.getElementById('amount-price');
+      const amountEl      = document.getElementById('amount');
+      const amountErrorEl = document.getElementById('amount-error');
+      const priceInline   = document.getElementById('amount-price-container');
+      const priceSpan     = document.getElementById('amount-price');
 
-      const pkgListEl       = document.getElementById('packages');
-      const toggleBtn       = document.getElementById('toggleOptions');
-      const buyBtn          = document.getElementById('buyBtn');
+      const buyBtn        = document.getElementById('buyBtn');
 
-      let recipientId    = '';
-      let selectedStars  = null;
-      let expanded       = false;
-      const pkgCounts    = [50,500,2500,10000,25000,100000,500000,1000000];
-      const pkgPrices    = {};
-      const fmt = v => (+v).toLocaleString('en-US',{minimumFractionDigits:4});
+      let recipientId = '';
 
-      // Clear inputs
+      // Clear fields
       window.clearInput = id => {
-        if (id==='username') {
+        if (id === 'username') {
           usernameEl.disabled = false;
           usernameEl.value = '';
           recipientId = '';
           usernameIcon.src = 'Search.svg';
           userErrorEl.textContent = '';
           clearUserEl.style.display = 'none';
-          // reset packages
-          Object.keys(pkgPrices).forEach(k => delete pkgPrices[k]);
-          renderPackages();
         } else {
           amountEl.value = '';
           priceInline.style.display = 'none';
           amountErrorEl.textContent = '';
-          selectedStars = null;
         }
         updateBuyBtn();
       };
 
-      // Load package prices for a given recipient
-      async function loadPackagePrices(recipient) {
-        pkgListEl.querySelectorAll('.package').forEach(el => el.remove());
-        // fetch all prices
-        await Promise.all(pkgCounts.map(q =>
-          fetch('/api/price', {
-            method: 'POST',
-            headers: {'Content-Type':'application/json'},
-            body: JSON.stringify({ recipient, quantity: q })
-          })
-          .then(r => r.ok ? r.json() : Promise.resolve({ok:false}))
-          .then(j => { pkgPrices[q] = j.ok ? j.amount/1e9 : 0; })
-        ));
-        renderPackages();
-      }
-
-      // Render packages list
-      function renderPackages() {
-        pkgListEl.innerHTML = '';
-        const list = expanded ? pkgCounts : [50,500,2500];
-        list.forEach(stars => {
-          const price = pkgPrices[stars] || 0;
-          const div = document.createElement('div');
-          div.className = 'package'+(selectedStars===stars?' selected':'');
-          div.innerHTML = `
-            <div class="left">
-              <div class="checkbox"></div>
-              <div class="stars"><img src="star.svg"/><img src="star.svg"/><img src="star.svg"/></div>
-              <span>${stars.toLocaleString()} Stars</span>
-            </div>
-            <div class="price">
-              <img src="ton.svg" class="ton-logo"/><span>${fmt(price)}</span>
-            </div>`;
-          div.onclick = () => {
-            selectedStars = stars;
-            amountEl.value = '';
-            priceInline.style.display = 'none';
-            updateBuyBtn();
-            renderPackages();
-          };
-          pkgListEl.appendChild(div);
-        });
-        toggleBtn.textContent = expanded ? 'Hide More Options ▲' : 'Show More Options ▼';
-      }
-
-      // Username blur → fetch recipient, then prices
+      // Username lookup
       usernameEl.addEventListener('blur', async () => {
         const u = usernameEl.value.trim();
         if (!u) return;
         userErrorEl.textContent = '';
         const res = await fetch('/api/recipient', {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
+          method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({ username: u })
-        });                                                                    
+        });
         const j = await res.json();
         if (j.ok) {
           recipientId = j.recipient;
-          // show name in the same input
-          usernameEl.value = j.name;
+          usernameEl.value  = j.name;
           usernameEl.disabled = true;
           clearUserEl.style.display = 'block';
-          // fetch packages prices for this recipient
-          await loadPackagePrices(recipientId);
-          // if amount already entered, re-trigger price fetch
-          if (amountEl.value) {
-            amountEl.dispatchEvent(new Event('input'));
-          }
         } else {
           userErrorEl.textContent = 'User not found';
           usernameIcon.src = 'error.svg';
@@ -276,50 +177,34 @@
         updateBuyBtn();
       });
 
-      // Quantity input → validate & fetch price
+      // Amount input
       amountEl.addEventListener('input', async () => {
-        selectedStars = null;
         amountErrorEl.textContent = '';
-        const v = parseInt(amountEl.value,10);
-        if (isNaN(v) || v<50 || v>1000000) {
-          priceInline.style.display='none';
-          if (v<50) amountErrorEl.textContent='Min. 50 stars';
-          if (v>1000000) amountErrorEl.textContent='Max. 1,000,000 stars';
+        const v = parseInt(amountEl.value, 10);
+        if (isNaN(v) || v < 50 || v > 1000000) {
+          priceInline.style.display = 'none';
+          if (v < 50) amountErrorEl.textContent = 'Min. 50 stars';
+          if (v > 1000000) amountErrorEl.textContent = 'Max. 1,000,000 stars';
           return updateBuyBtn();
         }
         if (recipientId) {
-          const r = await fetch('/api/price',{
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({ recipient: recipientId, quantity: v })
-          });
+          const r = await fetch('/api/price',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ recipient: recipientId, quantity: v }) });
           const d = await r.json();
           if (d.ok) {
-            priceSpan.textContent = fmt(d.amount/1e9);
+            priceSpan.textContent = (+d.amount/1e9).toLocaleString('en-US',{minimumFractionDigits:4});
             priceInline.style.display = 'flex';
           }
         }
         updateBuyBtn();
       });
 
-      // Toggle more packages
-      toggleBtn.onclick = () => {
-        expanded = !expanded;
-        renderPackages();
-      };
-      window.addEventListener('resize', renderPackages);
-
+      // Update Buy button state
       function updateBuyBtn() {
-        const okQty = selectedStars || (+amountEl.value>=50 && +amountEl.value<=1000000);
-        const okUsr = !!recipientId;
-        const en = walletConnected && okUsr && okQty;
+        const okQty = recipientId && (parseInt(amountEl.value,10) >= 50 && parseInt(amountEl.value,10) <= 1000000);
+        const en = walletConnected && recipientId && okQty;
         buyBtn.disabled = !en;
         buyBtn.classList.toggle('enabled', en);
       }
-
-      // Initial render
-      renderPackages();
-      updateBuyBtn();
     });
   </script>
 </body>
