@@ -4,11 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DUST_IO</title>
+
   <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@600&family=Anton&display=swap" rel="stylesheet">
+
+  <!-- Manifest для TON Connect (исправлено 404) -->
+  <link rel="manifest" href="/tonconnect-manifest.json">
+
   <!-- TON Connect UI SDK -->
-  <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+  <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js" defer></script>
+
   <style>
-    /* ваши стили без изменений */
     :root {
       --primary: #1A2026;
       --header: #212932;
@@ -20,153 +25,132 @@
       --error: #e74c3c;
       --disabled: #0096F3;
     }
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-    body {
-      font-family: 'Rubik', sans-serif;
-      background: var(--primary);
-      color: var(--white);
-    }
-    /* Hide number input spinners */
+    * { box-sizing: border-box; margin:0; padding:0 }
+    body { font-family: 'Rubik', sans-serif; background: var(--primary); color: var(--white) }
     input[type=number]::-webkit-outer-spin-button,
-    input[type=number]::-webkit-inner-spin-button {
-      -webkit-appearance: none;
-      margin: 0;
-    }
-    input[type=number] {
-      -moz-appearance: textfield;
-    }
+    input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0 }
+    input[type=number] { -moz-appearance: textfield }
+
     /* Recipient photo & name */
     .recipient-photo {
-      position: absolute;
-      top: 50%; left: 36px;
-      transform: translateY(-50%);
-      width: 24px; height: 24px;
-      border-radius: 50%; display: none;
+      position: absolute; top:50%; left:36px; transform:translateY(-50%);
+      width:24px; height:24px; border-radius:50%; display:none;
     }
     .recipient-name {
-      position: absolute;
-      top: 50%; left: 68px;
-      transform: translateY(-50%);
-      color: var(--white); font-size: 14px;
-      display: none;
+      position: absolute; top:50%; left:68px; transform:translateY(-50%);
+      color: var(--white); font-size:14px; display:none;
     }
     /* Inline amount price */
     .price-inline {
-      position: absolute;
-      top: 50%; right: 36px;
-      transform: translateY(-50%);
-      display: none;
-      align-items: center; gap: 4px;
+      display: flex; align-items: center; gap:6px; padding-right:12px;
+      position: absolute; top:50%; right:36px; transform:translateY(-50%); display:none;
     }
-    .price-inline .ton-logo { width: 16px; height: 16px; }
+    .price-inline .ton-logo { width:16px; height:16px }
 
-    h1 { font-family: 'Anton', sans-serif; font-size: 30px; letter-spacing: 1px; }
-    header { background-color: var(--header); padding: 12px; display: flex; flex-direction: column; width: 100%; }
-    .header-top { display: flex; justify-content: space-between; align-items: center; }
-    .logo-title { display: flex; align-items: center; gap: 3px; }
-    .logo-title img { width: 50px; height: 50px; object-fit: contain; }
-    .nav { display: flex; gap: 24px; margin-top: 12px; flex-wrap: wrap; }
-    .nav a { text-decoration: none; color: var(--white); font-weight: 500; border-bottom: 2px solid transparent; padding-bottom: 4px; }
-    .nav a.active { border-color: var(--blue); }
-    .ton-connect { background: rgba(255, 255, 255, 0); border: none; padding: 10px 8px; border-radius: 8px; color: var(--white); font-weight: bold; cursor: pointer; }
-    .container { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
-    .intro { text-align: center; margin-bottom: 24px; }
-    .intro h2 { font-size: 26px; display: flex; justify-content: center; align-items: center; gap: 10px; }
-    .intro p { color: var(--lightgray); font-size: 15px; margin-top: 6px; }
-    @media (max-width: 600px) {
-      .intro p { display: block; font-size: 14px; }
+    /* пакеты: gap между иконкой и цифрой */
+    .package .price {
+      display: flex; align-items: center; gap:6px;
     }
-    label, .section-title { display: block; margin-top: 16px; margin-bottom: 8px; color: var(--lightgray); font-size: 14px; }
-    .input-wrapper { position: relative; margin-bottom: 10px; }
-    .input-wrapper img { position: absolute; top: 50%; left: 12px; transform: translateY(-50%); width: 25px; height: 25px; }
-    input[type="text"], input[type="number"] { width: 100%; padding: 12px 44px; background: var(--card); border: none; border-radius: 8px; color: var(--white); font-size: 16px; outline: none; }
-    .error-text { color: var(--error); font-size: 13px; margin-top: 4px; }
-    .clear-icon { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 18px; color: var(--lightgray); cursor: pointer; display: none; }
-    input:not(:placeholder-shown) ~ .clear-icon { display: block; }
-    .package-list { margin-top: 24px; display: flex; flex-direction: column; gap: 14px; }
-    .package { background: var(--card); border: 2px solid transparent; border-radius: 12px; padding: 18px 20px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: 0.3s; flex-wrap: wrap; }
-    .package.selected { border-color: var(--blue); }
-    .left { display: flex; align-items: center; gap: 14px; flex-wrap: nowrap; }
-    .checkbox { width: 20px; height: 20px; border: 2px solid var(--gray); border-radius: 50%; position: relative; }
-    .package.selected .checkbox { border-color: var(--blue); }
-    .checkbox::after { content: ""; width: 10px; height: 10px; background: var(--blue); border-radius: 50%; position: absolute; top: 3px; left: 3px; display: none; }
-    .package.selected .checkbox::after { display: block; }
-    .price { display: flex; align-items: center; gap: 6px; }
-    .ton-logo { width: 20px; height: 20px; }
-    .stars { display: flex; margin-right: 8px; }
-    .stars img { width: 20px; height: 20px; margin-left: -25px; filter: drop-shadow(1px 0 3px rgb(0, 0, 0)); }
-    .stars img:first-child { margin-left: 5px; }
-    .btn-buy { background: var(--disabled); border: none; padding: 16px; width: 100%; height: 50px; margin-top: 24px; font-weight: bold; border-radius: 12px; color: rgb(179, 179, 179); cursor: not-allowed; font-size: 16px; }
-    .btn-buy.enabled { background: var(--blue); color: var(--white); cursor: pointer; }
+
+    h1 { font-family: 'Anton', sans-serif; font-size:30px; letter-spacing:1px }
+    header { background: var(--header); padding:12px; display:flex; justify-content:space-between; align-items:center }
+    .logo-title { display:flex; align-items:center; gap:8px }
+    .logo-title img { width:50px; height:50px }
+    .logo-title h1 { font-size:28px }
+    .ton-connect { background:rgba(255, 255, 255, 0); border:none; padding:8px 12px; border-radius:8px; color:#fff; cursor:pointer }
+    .container { max-width:900px; margin:24px auto; padding:0 16px }
+    .intro { text-align:center; margin-bottom:24px }
+    .intro h2 { font-size:26px; display:flex; justify-content:center; align-items:center; gap:10px }
+    .intro p { color:var(--lightgray); font-size:15px; margin-top:6px }
     .link-history { display: block; text-align: center; margin-top: 16px; font-size: 14px; color: var(--blue); text-decoration: none; }
-    .show-options { background: var(--card); border-radius: 10px; text-align: center; padding: 20px; height: 55px; margin-top: 20px; font-weight: 500; font-size: 15px; color: var(--blue); cursor: pointer; }
-    @media (min-width: 600px) {
-      .logo-title img { width: 65px; height: 65px; }
-      nav.nav { justify-content: center; align-items: center; margin-top: -45px; }
-      header { height: 90px; }
+
+    label, .section-title { display:block; margin:16px 0 8px; color:var(--lightgray); font-size:14px }
+    .input-wrapper { position:relative; margin-bottom:12px }
+    .input-wrapper img.icon { position:absolute; top:50%; left:12px; width:25px; height:25px; transform:translateY(-50%) }
+    input[type="text"], input[type="number"] {
+      width:100%; padding:12px 44px; background:var(--card); border:none; border-radius:8px;
+      color:var(--white); font-size:16px; outline:none;
     }
-    @media (min-width: 768px) {
-      .logo-title img { width: 70px; height: 70px; }
-      nav.nav { justify-content: center; align-items: center; margin-top: -45px; }
-      header { height: 85px; }
+    .clear-icon {
+      position:absolute; top:50%; right:12px; transform:translateY(-50%);
+      font-size:18px; color:var(--lightgray); cursor:pointer; display:none;
     }
-    @media (min-width: 1024px) {
-      .logo-title img { width: 75px; height: 75px; }
-      nav.nav { justify-content: center; align-items: center; margin-top: -45px; }
-      header { height: 95px; }
+    input:not(:placeholder-shown) ~ .clear-icon { display:block }
+
+    .package-list { margin-top:24px; display:flex; flex-direction:column; gap:14px }
+    .package {
+      background:var(--card); border:2px solid transparent; border-radius:12px;
+      padding:18px 20px; display:flex; align-items:center; justify-content:space-between;
+      cursor:pointer; transition:0.3s;
     }
-    @media (min-width: 1280px) {
-      .logo-title img { width: 75px; height: 75px; }
-      header { height: 95px; }
+    .package.selected { border-color:var(--blue) }
+    .left { display:flex; align-items:center; gap:14px }
+    .checkbox {
+      width:20px; height:20px; border:2px solid var(--gray); border-radius:50%; position:relative;
+    }
+    .checkbox::after {
+      content:""; width:10px; height:10px; background:var(--blue);
+      border-radius:50%; position:absolute; top:3px; left:3px; display:none;
+    }
+    .package.selected .checkbox::after { display:block }
+
+    .stars { display:flex; margin-right:8px }
+    .stars img {
+      width:20px; height:20px; margin-left:-25px;
+      filter:drop-shadow(1px 0 3px rgb(0,0,0));
+    }
+    .stars img:first-child { margin-left:5px }
+
+    .btn-buy {
+      background:var(--disabled); border:none; padding:16px; width:100%; height:50px;
+      margin-top:24px; font-weight:bold; border-radius:12px; color:rgb(179,179,179);
+      cursor:not-allowed; font-size:16px;
+    }
+    .btn-buy.enabled {
+      background:var(--blue); color:var(--white); cursor:pointer;
+    }
+
+    .show-options {
+      background:var(--card); border-radius:10px; text-align:center; padding:20px;
+      height:55px; margin-top:20px; font-weight:500; font-size:15px; color:var(--blue);
+      cursor:pointer;
     }
   </style>
 </head>
 <body>
   <header>
-    <div class="header-top">
-      <div class="logo-title">
-        <img src="logo.png" alt="Logo">
-        <h1>DUST_IO</h1>
-      </div>
-      <button class="ton-connect" id="ton-connect"></button>
+    <div class="logo-title">
+      <img src="logo.png" alt="Logo"><h1>DUST_IO</h1>
     </div>
-    <nav class="nav">
-      <a href="#" class="active">Stars</a>
-      <a href="#">Support</a>
-      <a href="#">Terms</a>
-    </nav>
+    <button id="ton-connect" class="ton-connect"></button>
   </header>
 
   <div class="container">
     <div class="intro">
-      <h2>Buy Telegram Stars <img src="star.svg" alt="star" style="width: 26px;" /></h2>
+      <h2>Buy Telegram Stars <img src="star.svg" alt="star" style="width:26px"/></h2>
       <p>Top up Stars Balance for yourself or your friends and colleagues.</p>
     </div>
 
     <label for="username">Recipient</label>
     <div class="input-wrapper">
-      <img src="Search.svg" alt="search">
-      <input type="text" id="username" placeholder="Telegram username" />
-      <img id="recipient-photo" class="recipient-photo" src="" alt="recipient photo" />
+      <img src="Search.svg" class="icon"/>
+      <input type="text" id="username" placeholder="Telegram username"/>
+      <img id="recipient-photo" class="recipient-photo" alt="recipient photo"/>
       <span id="recipient-name" class="recipient-name"></span>
       <div class="clear-icon" onclick="clearInput('username')">×</div>
     </div>
+    <div id="error-msg" class="error-text"></div>
 
     <label for="amount">Quantity</label>
     <div class="input-wrapper">
-      <img src="star.svg" alt="star">
-      <input type="number" id="amount" placeholder="Amount from 50 to 1,000,000" />
+      <img src="star.svg" class="icon"/>
+      <input type="number" id="amount" placeholder="Amount from 50 to 1,000,000"/>
       <div class="price-inline" id="amount-price-container">
-        <img src="ton.svg" class="ton-logo" />
+        <img src="ton.svg" class="ton-logo" alt="TON"/>
         <span id="amount-price"></span>
       </div>
       <div class="clear-icon" onclick="clearInput('amount')">×</div>
     </div>
-    <div id="error-msg" class="error-text"></div>
 
     <p class="section-title">Or select a package</p>
     <div class="package-list" id="packages"></div>
@@ -177,191 +161,182 @@
   </div>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      // === TON Connect UI ===
-      const ton = new TON_CONNECT_UI.TonConnectUI({
-        manifestUrl: '/tonconnect-manifest.json',
-        buttonRootId: 'ton-connect'
-      });
-      let walletConnected = false;
-      ton.onStatusChange(() => {
-        walletConnected = ton.connected;
-        updateBuyBtn();
-      });
-    
-      // === Элементы страницы ===
-      const usernameEl    = document.getElementById('username');
-      const photoEl       = document.getElementById('recipient-photo');
-      const nameEl        = document.getElementById('recipient-name');
-      const clearUserEl   = document.querySelector('#username ~ .clear-icon');
-      const amountEl      = document.getElementById('amount');
-      const priceInline   = document.getElementById('amount-price-container');
-      const priceSpan     = document.getElementById('amount-price');
-      const clearAmtEl    = document.querySelector('#amount ~ .clear-icon');
-      const pkgListEl     = document.getElementById('packages');
-      const toggleBtn     = document.getElementById('toggleOptions');
-      const buyBtn        = document.getElementById('buyBtn');
-      const errorMsg      = document.getElementById('error-msg');
-    
-      let recipientId   = '';
-      let selectedStars = null;
-      let expanded      = false;
-      const pkgCounts   = [50,75,100,150,250,350,500,750,1000,1500,2500,5000,10000,25000,35000,50000,100000,150000,500000,1000000];
-      const pkgPrices   = {};
-      const DEFAULT_USER = 'b77so';
-    
-      const fmt = v => (+v).toLocaleString('en-US',{minimumFractionDigits:4});
-    
-      // Функция очистки полей
-      window.clearInput = id => {
-        if (id === 'username') {
-          usernameEl.disabled = false;
-          usernameEl.value = '';
-          recipientId = '';
-          photoEl.style.display = 'none';
-          nameEl.style.display = 'none';
-          errorMsg.textContent = '';
-        } else {
-          amountEl.value = '';
-          priceInline.style.display = 'none';
-          errorMsg.textContent = '';
-        }
-        updateBuyBtn();
-      };
-    
-      // 1) Получаем дефолтного получателя для пакетов
-      async function initDefaultRecipient() {
-        const res = await fetch('/api/recipient', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: DEFAULT_USER })
-        });
-        const j = await res.json();
-        return j.ok ? j.recipient : '';
-      }
-    
-      // 2) Подгружаем цены пакетов (нанотоны -> TON)
-      async function loadPackagePrices(defaultRec) {
-        if (!defaultRec) return;
-        await Promise.all(pkgCounts.map(q =>
-          fetch('/api/price', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ recipient: defaultRec, quantity: q })
-          })
-          .then(r => r.json())
-          .then(j => pkgPrices[q] = j.ok ? j.amount / 1e9 : 0)
-        ));
-        renderPackages();
-      }
-    
-      // Рендер пакетов
-      function renderPackages() {
-        pkgListEl.innerHTML = '';
-        const list = expanded ? pkgCounts : [50,500,2500];
-        list.forEach(stars => {
-          const price = pkgPrices[stars] || 0;
-          const div = document.createElement('div');
-          div.className = 'package' + (selectedStars === stars ? ' selected' : '');
-          div.innerHTML = `
-            <div class="left">
-              <div class="checkbox"></div>
-              <div class="stars">
-                <img src="star.svg"/><img src="star.svg"/><img src="star.svg"/>
-              </div>
-              <span>${stars.toLocaleString()} Stars</span>
-            </div>
-            <div class="price">
-              <img src="ton.svg" class="ton-logo"/><span>${fmt(price)}</span>
-            </div>`;
-          div.onclick = () => {
-            selectedStars = stars;
-            amountEl.value = '';
-            priceInline.style.display = 'none';
-            updateBuyBtn();
-            renderPackages();
-          };
-          pkgListEl.appendChild(div);
-        });
-        toggleBtn.textContent = expanded ? 'Hide More Options ▲' : 'Show More Options ▼';
-      }
-    
-      // Инициализация: подгружаем цены пакетов по дефолтному получателю
-      initDefaultRecipient().then(initRec => loadPackagePrices(initRec));
-    
-      // blur для поля юзернейма: подставляем имя, аватар, блокируем input
-      usernameEl.addEventListener('blur', async () => {
-        const u = usernameEl.value.trim();
-        if (!u) return;
-        const res = await fetch('/api/recipient', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: u })
-        });
-        const j = await res.json();
-        if (j.ok) {
-          recipientId = j.recipient;
-          usernameEl.value = j.name;
-          usernameEl.disabled = true;
-          photoEl.src = j.photo;
-          photoEl.style.display = 'block';
-          nameEl.textContent = j.name;
-          nameEl.style.display = 'inline';
-          clearUserEl.style.display = 'block';
-        } else {
-          errorMsg.textContent = 'Пользователь не найден';
-        }
-        updateBuyBtn();
-      });
-    
-      // input для amount: запрос цены и отображение в TON
-      amountEl.addEventListener('input', async () => {
-        selectedStars = null;
-        errorMsg.textContent = '';
-        const v = parseInt(amountEl.value, 10);
-        if (isNaN(v) || v < 50 || v > 1000000) {
-          if (v < 50) errorMsg.textContent = 'Мин. 50 stars';
-          if (v > 1000000) errorMsg.textContent = 'Макс. 1 000 000 stars';
-          priceInline.style.display = 'none';
-          return updateBuyBtn();
-        }
-        if (recipientId) {
-          const r = await fetch('/api/price', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ recipient: recipientId, quantity: v })
-          });
-          const d = await r.json();
-          if (d.ok) {
-            priceSpan.textContent = fmt(d.amount / 1e9);
-            priceInline.style.display = 'flex';
-          }
-        }
-        updateBuyBtn();
-      });
-    
-      // переключение пакетов
-      toggleBtn.onclick = () => {
-        expanded = !expanded;
-        renderPackages();
-      };
-      window.addEventListener('resize', renderPackages);
-    
-      // Обновление состояния кнопки Buy
-      function updateBuyBtn() {
-        const okQty = selectedStars || (+amountEl.value >= 50 && +amountEl.value <= 1000000);
-        const okUser = !!recipientId;
-        const en = walletConnected && okUser && okQty;
-        buyBtn.disabled = !en;
-        buyBtn.classList.toggle('enabled', en);
-      }
-    
-      // Первый рендер
-      renderPackages();
+  document.addEventListener('DOMContentLoaded', () => {
+    // === TON Connect UI init ===
+    const ton = new TON_CONNECT_UI.TonConnectUI({
+      manifestUrl: '/tonconnect-manifest.json',
+      buttonRootId: 'ton-connect'
+    });
+    let walletConnected = false;
+    ton.onStatusChange(() => {
+      walletConnected = ton.connected;
       updateBuyBtn();
     });
-    </script>
-    
 
+    // === Elements ===
+    const usernameEl    = document.getElementById('username');
+    const photoEl       = document.getElementById('recipient-photo');
+    const nameEl        = document.getElementById('recipient-name');
+    const clearUserEl   = document.querySelector('#username ~ .clear-icon');
+    const amountEl      = document.getElementById('amount');
+    const priceInline   = document.getElementById('amount-price-container');
+    const priceSpan     = document.getElementById('amount-price');
+    const pkgListEl     = document.getElementById('packages');
+    const toggleBtn     = document.getElementById('toggleOptions');
+    const buyBtn        = document.getElementById('buyBtn');
+    const errorMsg      = document.getElementById('error-msg');
+
+    let recipientId    = '';
+    let selectedStars  = null;
+    let expanded       = false;
+    const pkgCounts    = [50,75,100,150,250,350,500,750,1000,1500,2500,5000,10000,25000,35000,50000,100000,150000,500000,1000000];
+    const pkgPrices    = {};
+    const DEFAULT_USER = 'b77so';
+
+    const fmt = v => (+v).toLocaleString('en-US',{minimumFractionDigits:4});
+
+    // Clear inputs
+    window.clearInput = id => {
+      if (id==='username') {
+        usernameEl.disabled = false;
+        usernameEl.value = '';
+        recipientId = '';
+        photoEl.style.display='none';
+        nameEl.style.display='none';
+        errorMsg.textContent = '';
+      } else {
+        amountEl.value = '';
+        priceInline.style.display='none';
+        errorMsg.textContent = '';
+      }
+      updateBuyBtn();
+    };
+
+    // 1) Получаем default recipient для пакетов
+    async function initDefaultRecipient() {
+      const res = await fetch('/api/recipient',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ username: DEFAULT_USER })
+      });
+      const j = await res.json();
+      return j.ok ? j.recipient : '';
+    }
+
+    // 2) Подгружаем цены пакетов (нанотоны → TON)
+    async function loadPackagePrices(defaultRec) {
+      if (!defaultRec) return;
+      await Promise.all(pkgCounts.map(q =>
+        fetch('/api/price',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ recipient: defaultRec, quantity: q })
+        })
+        .then(r => r.json())
+        .then(j => pkgPrices[q] = j.ok? j.amount/1e9 : 0)
+      ));
+      renderPackages();
+    }
+
+    // Рендер пакетов
+    function renderPackages() {
+      pkgListEl.innerHTML = '';
+      const list = expanded ? pkgCounts : [50,500,2500];
+      list.forEach(stars => {
+        const price = pkgPrices[stars]||0;
+        const div = document.createElement('div');
+        div.className = 'package'+(selectedStars===stars?' selected':'');
+        div.innerHTML = `
+          <div class="left">
+            <div class="checkbox"></div>
+            <div class="stars"><img src="star.svg"/><img src="star.svg"/><img src="star.svg"/></div>
+            <span>${stars.toLocaleString()} Stars</span>
+          </div>
+          <div class="price">
+            <img src="ton.svg" class="ton-logo"/><span>${fmt(price)}</span>
+          </div>`;
+        div.onclick = () => {
+          selectedStars = stars;
+          amountEl.value = '';
+          priceInline.style.display='none';
+          updateBuyBtn();
+          renderPackages();
+        };
+        pkgListEl.appendChild(div);
+      });
+      toggleBtn.textContent = expanded?'Hide More Options ▲':'Show More Options ▼';
+    }
+
+    // Инициализация пакетов
+    initDefaultRecipient().then(initRec => loadPackagePrices(initRec));
+
+    // blur username → вставляем name, avatar, блокируем input
+    usernameEl.addEventListener('blur', async () => {
+      const u = usernameEl.value.trim();
+      if (!u) return;
+      const res = await fetch('/api/recipient',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ username: u })
+      });
+      const j = await res.json();
+      if (j.ok) {
+        recipientId = j.recipient;
+        usernameEl.value = j.name;
+        usernameEl.disabled = true;
+        photoEl.src = j.photo; photoEl.style.display = 'block';
+        nameEl.textContent = j.name; nameEl.style.display = 'inline';
+        clearUserEl.style.display = 'block';
+      } else {
+        errorMsg.textContent = 'Пользователь не найден';
+      } 
+      updateBuyBtn();
+    });
+
+    // input amount → fetch price and show in TON
+    amountEl.addEventListener('input', async () => {
+      selectedStars = null;
+      errorMsg.textContent = '';
+      const v = parseInt(amountEl.value,10);
+      if (isNaN(v)||v<50||v>1000000) {
+        if (v<50) errorMsg.textContent='Мин. 50 stars';
+        if (v>1000000) errorMsg.textContent='Макс. 1 000 000 stars';
+        priceInline.style.display='none';
+        return updateBuyBtn();
+      }
+      if (recipientId) {
+        const r = await fetch('/api/price',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ recipient: recipientId, quantity: v })
+        });
+        const d = await r.json();
+        if (d.ok) {
+          priceSpan.textContent = fmt(d.amount/1e9);
+          priceInline.style.display = 'flex';
+        }
+      }
+      updateBuyBtn();
+    });
+
+    toggleBtn.onclick = () => {
+      expanded = !expanded;
+      renderPackages();
+    };
+    window.addEventListener('resize', renderPackages);
+
+    function updateBuyBtn() {
+      const okQty = selectedStars || (+amountEl.value>=50 && +amountEl.value<=1000000);
+      const okUsr = !!recipientId;
+      const en = walletConnected && okUsr && okQty;
+      buyBtn.disabled = !en;
+      buyBtn.classList.toggle('enabled', en);
+    }
+
+    // первый рендер
+    renderPackages();
+    updateBuyBtn();
+  });
+  </script>
 </body>
 </html>
