@@ -6,27 +6,32 @@ const app     = express();
 
 app.use(express.static(path.join(__dirname,'public')));
 app.use(express.json());
+app.get('/', (_,res) => res.sendFile(path.join(__dirname,'public','index.html')));
 
-const TP = 'https://api.tpayer.net';
-const COMMON = {
+const TP   = 'https://api.tpayer.net';
+const HEAD = {
   'accept': 'application/json, text/plain, */*',
   'accept-language': 'ru,en;q=0.9',
   'content-type': 'application/x-www-form-urlencoded',
   'origin': 'https://tpayer.net',
   'referer': 'https://tpayer.net/',
-  'user-agent': 'Mozilla/5.0'
+  'sec-ch-ua': '"Not A(Brand";v="8", "Chromium";v="132", "YaBrowser";v="25.2", "Yowser";v="2.5"',
+  'sec-ch-ua-mobile': '?0',
+  'sec-ch-ua-platform': '"Windows"',
+  'sec-fetch-dest': 'empty',
+  'sec-fetch-mode': 'cors',
+  'sec-fetch-site': 'same-site',
+  'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 YaBrowser/25.2.0.0 Safari/537.36'
 };
 
-app.get('/', (_,res) => res.sendFile(path.join(__dirname,'public','index.html')));
-
-// recipient lookup
+// Получатель
 app.post('/api/recipient', async (req,res) => {
   try {
     const { username } = req.body;
     const r = await axios.post(
       `${TP}/searchStarsRecipient`,
       new URLSearchParams({ username }).toString(),
-      { headers: COMMON }
+      { headers: HEAD }
     );
     return res.json(r.data);
   } catch (e) {
@@ -34,26 +39,21 @@ app.post('/api/recipient', async (req,res) => {
   }
 });
 
-// price fetch (returns NANOTON, client divides by 1e9)
+// Цена (возвращает amount в нанотонах)
 app.post('/api/price', async (req,res) => {
   try {
     const { recipient, quantity } = req.body;
     const init = await axios.post(
       `${TP}/initBuyStarsRequest`,
       new URLSearchParams({ recipient, quantity }).toString(),
-      { headers: COMMON }
+      { headers: HEAD }
     );
     if (!init.data.ok) return res.json({ ok:false });
-    const link = await axios.post(
-      `${TP}/getBuyStarsLink`,
-      new URLSearchParams({ id: init.data.req_id }).toString(),
-      { headers: COMMON }
-    );
-    return res.json({ ok: link.data.ok, amount: Number(link.data.amount) });
+    return res.json({ ok:true, amount: init.data.amount });
   } catch (e) {
     return res.json({ ok:false, error:e.message });
   }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, ()=>console.log(`Listening on ${PORT}`));
+app.listen(PORT, () => console.log(`Listening on ${PORT}`));
