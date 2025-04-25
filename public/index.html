@@ -34,7 +34,6 @@
     .logo-title h1 { font-family: 'Anton'; font-size:28px }
     .ton-connect { background:transparent; border:none; padding:8px 12px; border-radius:8px; color:#fff; cursor:pointer }
 
-    /* Контейнер фиксированной ширины */
     .container {
       width: 100%;
       max-width: 500px;
@@ -56,12 +55,10 @@
     .input-wrapper img.icon { position:absolute; top:50%; left:12px; width:25px; height:25px; transform:translateY(-50%) }
     .input-wrapper img.avatar { position:absolute; top:50%; left:12px; width:32px; height:32px; border-radius:50%; transform:translateY(-50%); display:none }
 
-    /* Увеличенная высота полей */
     input[type="text"], input[type="number"] {
       width:100%; padding:18px 44px; background:var(--card); border:none; border-radius:8px;
       color:var(--white); font-size:16px; outline:none;
     }
-    /* Убираем стрелки для number input */
     input[type=number]::-webkit-outer-spin-button,
     input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0 }
     input[type=number] { -moz-appearance: textfield }
@@ -103,7 +100,6 @@
       <p>Top up Stars Balance for yourself or your friends.</p>
     </div>
 
-    <!-- Recipient -->
     <label for="username">Recipient</label>
     <div class="input-wrapper">
       <img id="username-icon" src="Search.svg" class="icon" alt="icon"/>
@@ -113,7 +109,6 @@
     </div>
     <div id="user-error" class="error-text"></div>
 
-    <!-- Quantity -->
     <label for="amount">Quantity</label>
     <div class="input-wrapper">
       <img src="star.svg" class="icon" alt="icon"/>
@@ -132,9 +127,8 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // TON Connect (явный абсолютный путь для manifest)
       const ton = new TON_CONNECT_UI.TonConnectUI({
-        manifestUrl: window.location.origin + 'https://dust-st-io-production.up.railway.app/tonconnect-manifest.json',
+        manifestUrl: window.location.origin + '/tonconnect-manifest.json',
         buttonRootId: 'ton-connect'
       });
       let walletConnected = false;
@@ -148,17 +142,14 @@
       const avatarEl      = document.getElementById('avatar');
       const userErrorEl   = document.getElementById('user-error');
       const clearUserEl   = document.querySelector('#username ~ .clear-icon');
-
       const amountEl      = document.getElementById('amount');
       const amountErrorEl = document.getElementById('amount-error');
       const priceInline   = document.getElementById('amount-price-container');
       const priceSpan     = document.getElementById('amount-price');
-
       const buyBtn        = document.getElementById('buyBtn');
 
       let recipientId = '';
 
-      // Clear fields
       window.clearInput = id => {
         if (id === 'username') {
           usernameEl.disabled = false;
@@ -176,7 +167,6 @@
         updateBuyBtn();
       };
 
-      // Username lookup
       usernameEl.addEventListener('blur', async () => {
         const u = usernameEl.value.trim();
         if (!u) return;
@@ -189,9 +179,9 @@
         const j = await res.json();
         if (j.ok) {
           recipientId = j.recipient;
-          usernameEl.value  = j.name;
+          usernameEl.value    = j.name;
           usernameEl.disabled = true;
-          avatarEl.src = j.photo;
+          avatarEl.src        = j.photo;
           avatarEl.style.display = 'block';
           clearUserEl.style.display = 'block';
         } else {
@@ -201,7 +191,6 @@
         updateBuyBtn();
       });
 
-      // Amount input
       amountEl.addEventListener('input', async () => {
         amountErrorEl.textContent = '';
         const v = parseInt(amountEl.value, 10);
@@ -215,14 +204,14 @@
           const r = await fetch('/api/price',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ recipient: recipientId, quantity: v }) });
           const d = await r.json();
           if (d.ok) {
-            priceSpan.textContent = (d.amount / 1e9).toString();
+            // Форматируем цену с 4 десятичными, избегая экспоненциальной записи
+            priceSpan.textContent = (d.amount / 1e9).toFixed(4);
             priceInline.style.display = 'flex';
           }
         }
         updateBuyBtn();
       });
 
-      // Update Buy button state
       function updateBuyBtn() {
         const okQty = recipientId && (parseInt(amountEl.value,10) >= 50 && parseInt(amountEl.value,10) <= 1000000);
         const en = walletConnected && recipientId && okQty;
