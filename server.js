@@ -4,11 +4,19 @@ const path    = require('path');
 const axios   = require('axios');
 const app     = express();
 
-app.use(express.static(path.join(__dirname,'public')));
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
-app.get('/', (_,res)=>res.sendFile(path.join(__dirname,'public','index.html')));
+app.get('/', (_, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 const TP = 'https://api.tpayer.net';
+const HEADERS = {
+  'accept': 'application/json, text/plain, */*',
+  'content-type': 'application/x-www-form-urlencoded',
+  'origin': 'https://tpayer.net',
+  'referer': 'https://tpayer.net'
+};
 
 // Получатель
 app.post('/api/recipient', async (req, res) => {
@@ -17,11 +25,11 @@ app.post('/api/recipient', async (req, res) => {
     const r = await axios.post(
       `${TP}/searchStarsRecipient`,
       new URLSearchParams({ username }).toString(),
-      { headers:{ 'Content-Type':'application/x-www-form-urlencoded', 'origin':'https://tpayer.net', 'referer':'https://tpayer.net' } }
+      { headers: HEADERS }
     );
     res.json(r.data);
-  } catch(e) {
-    res.json({ ok:false });
+  } catch (e) {
+    res.json({ ok: false, error: e.message });
   }
 });
 
@@ -32,19 +40,19 @@ app.post('/api/price', async (req, res) => {
     const init = await axios.post(
       `${TP}/initBuyStarsRequest`,
       new URLSearchParams({ recipient, quantity }).toString(),
-      { headers:{ 'Content-Type':'application/x-www-form-urlencoded', 'origin':'https://tpayer.net', 'referer':'https://tpayer.net' } }
+      { headers: HEADERS }
     );
-    if(!init.data.ok) return res.json({ ok:false });
+    if (!init.data.ok) return res.json({ ok: false });
     const link = await axios.post(
       `${TP}/getBuyStarsLink`,
-      new URLSearchParams({ id:init.data.req_id }).toString(),
-      { headers:{ 'Content-Type':'application/x-www-form-urlencoded', 'origin':'https://tpayer.net', 'referer':'https://tpayer.net' } }
+      new URLSearchParams({ id: init.data.req_id }).toString(),
+      { headers: HEADERS }
     );
-    return res.json({ ok:link.data.ok, amount: Number(link.data.amount) });
-  } catch(e) {
-    res.json({ ok:false });
+    return res.json({ ok: link.data.ok, amount: Number(link.data.amount) });
+  } catch (e) {
+    res.json({ ok: false, error: e.message });
   }
 });
 
-const PORT = process.env.PORT||3000;
-app.listen(PORT, ()=>console.log(`Server on ${PORT}`));
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server listening on ${PORT}`));
