@@ -1,4 +1,4 @@
-// server.js
+// server.mjs
 import 'dotenv/config';
 import express from 'express';
 import axios from 'axios';
@@ -7,16 +7,17 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
 const TP = 'https://api.tpayer.net';
 
-// Простая обёртка для form-запросов к tpayer
+// Универсальная обёртка для POST form-data
 async function postForm(path, data) {
   const res = await axios.post(
     TP + path,
-    new URLSearchParams(data),
+    new URLSearchParams(data).toString(),
     { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
   );
   return res.data;
@@ -30,7 +31,7 @@ app.post('/api/recipient', async (req, res) => {
     if (!rec.ok) {
       return res.status(404).json({ ok: false, error: 'Recipient not found' });
     }
-    // возвращаем recipient-id (и можно отдавать имя/аватар, если нужно)
+    // Возвращаем id, имя и аватар (если есть)
     res.json({ ok: true, recipient: rec.recipient, name: rec.name, photo: rec.photo });
   } catch (e) {
     console.error(e);
@@ -38,25 +39,39 @@ app.post('/api/recipient', async (req, res) => {
   }
 });
 
-// 2) Генерация payload для покупки; подписывать и отправлять будет кошелёк клиента
+// 2) Расчёт цены (без комиссии) и подготовка payload
+app.post('/api/price', async (req, res) => {
+  try {
+    const { recipient, quantity } = req.body;
+    // initBuyStarsRequest возвращает amount (в TON)
+    const init = await postForm('/initBuyStarsRequest', { recipient, quantity });
+    if (!init.ok) {
+      return res.status(400).json({ ok: false, error: 'init failed' });
+    }
+    const { amount } = init;
+    // Возвращаем сумму в nanotons и TON для показа
+    const nano = BigInt(Math.ceil(parseFloat(amount) * 1e9));
+    res.json({ ok: true, amountTon: parseFloat(amount).toFixed(9), amountNano: nano.toString() });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// 3) Подготовка транзакции для Ton Connect
 app.post('/api/buy', async (req, res) => {
   try {
     const { recipient, quantity } = req.body;
-
-    // initBuyStarsRequest → req_id
+    // init → req_id
     const init = await postForm('/initBuyStarsRequest', { recipient, quantity });
-    if (!init.ok) {
-      return res.status(400).json({ ok: false, error: 'initBuyStarsRequest failed' });
-    }
+    if (!init.ok) return res.status(400).json({ ok: false, error: 'init failed' });
     const req_id = init.req_id;
 
-    // getBuyStarsLink → адрес, amount, payload
+    // getBuyStarsLink → address, amount, payload
     const link = await postForm('/getBuyStarsLink', { id: req_id });
-    if (!link.ok) {
-      return res.status(400).json({ ok: false, error: 'getBuyStarsLink failed' });
-    }
+    if (!link.ok) return res.status(400).json({ ok: false, error: 'link failed' });
 
-    // Формируем ответ, который передаст фронтенду Ton Connect
+    // Отдаём фронту для Ton Connect
     res.json({
       ok: true,
       validUntil: Math.floor(Date.now() / 1000) + 3600,
