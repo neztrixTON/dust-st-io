@@ -3,58 +3,62 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Buy Telegram Stars</title>
+  <title>Dust_IO — Buy Telegram Stars</title>
   <link rel="manifest" href="/tonconnect-manifest.json">
   <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js" defer></script>
   <style>
     :root {
       --bg: #1a2026; --card: #242e38; --blue: #0096f3;
-      --white: #fff; --gray: #6c7380; --light: #a3a9b4;
-      --error: #e74c3c; --disabled: #555;
+      --white: #fff; --light: #a3a9b4; --error: #e74c3c; --disabled: #555;
     }
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Rubik',sans-serif;background:var(--bg);color:var(--white)}
-    header{padding:16px;text-align:right}
-    #ton-connect{background:none;border:none;color:var(--white);cursor:pointer}
-    .container{max-width:480px;margin:40px auto;padding:0 16px}
-    h1{text-align:center;margin-bottom:24px;font-weight:600}
-    label{display:block;margin-top:16px;color:var(--light)}
-    .input-group{position:relative;margin-top:8px}
-    .input-group input{
-      width:100%;padding:14px 44px;background:var(--card);
-      border:none;border-radius:8px;color:var(--white);outline:none;font-size:16px;
+    * { box-sizing: border-box; margin:0; padding:0; }
+    body { font-family: 'Rubik', sans-serif; background: var(--bg); color: var(--white); }
+    header { background: var(--card); padding:16px; display:flex; justify-content:space-between; align-items:center; }
+    .logo { display:flex; align-items:center; gap:8px; }
+    .logo img { width:40px; }
+    .logo h1 { font-family: 'Anton', sans-serif; font-size:24px; }
+    #ton-connect { background:none; border:none; color:var(--white); cursor:pointer; }
+    .container { max-width:500px; margin:32px auto; padding:0 16px; }
+    h2 { text-align:center; margin-bottom:16px; }
+    label { display:block; margin-top:16px; color:var(--a3a9b4); }
+    .input-group { position:relative; margin-top:8px; }
+    .input-group img.icon {
+      position:absolute; left:12px; top:50%; width:24px; height:24px; transform:translateY(-50%); opacity:0.7;
     }
-    .input-group img.icon{
-      position:absolute;left:12px;top:50%;width:24px;height:24px;
-      transform:translateY(-50%);opacity:0.7;
+    .input-group input {
+      width:100%; padding:14px 44px; background:var(--card); border:none; border-radius:8px;
+      color:var(--white); font-size:16px; outline:none;
     }
-    .error{margin-top:4px;font-size:13px;color:var(--error)}
-    #buyBtn{
-      margin-top:24px;width:100%;padding:14px;
-      border:none;border-radius:10px;font-size:16px;
-      background:var(--disabled);color:var(--light);cursor:not-allowed;
+    .error { margin-top:4px; font-size:13px; color:var(--error); }
+    #buyBtn {
+      margin-top:24px; width:100%; padding:14px; border:none; border-radius:12px;
+      font-size:16px; background:var(--disabled); color:var(--light); cursor:not-allowed;
     }
-    #buyBtn.enabled{
-      background:var(--blue);color:var(--white);cursor:pointer;
+    #buyBtn.enabled {
+      background:var(--blue); color:var(--white); cursor:pointer;
     }
   </style>
 </head>
 <body>
   <header>
+    <div class="logo">
+      <img src="logo.png" alt="Logo">
+      <h1>Dust_IO</h1>
+    </div>
     <button id="ton-connect"></button>
   </header>
 
   <div class="container">
-    <h1>Buy Telegram Stars</h1>
+    <h2>Buy Telegram Stars</h2>
 
-    <label>Recipient</label>
+    <label for="username">Recipient</label>
     <div class="input-group">
       <img src="Search.svg" class="icon" alt="search">
       <input id="username" type="text" placeholder="Telegram username" />
     </div>
     <div id="userError" class="error"></div>
 
-    <label>Quantity</label>
+    <label for="quantity">Quantity</label>
     <div class="input-group">
       <img src="star.svg" class="icon" alt="star">
       <input id="quantity" type="number" placeholder="Min 1" />
@@ -65,81 +69,84 @@
   </div>
 
   <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const ton = new TonConnectUI.TonConnectUI({
-      manifestUrl: `${location.origin}/tonconnect-manifest.json`,
-      buttonRootId: 'ton-connect'
-    });
-
-    const usernameEl = document.getElementById('username');
-    const userError  = document.getElementById('userError');
-    const qtyEl      = document.getElementById('quantity');
-    const qtyError   = document.getElementById('qtyError');
-    const buyBtn     = document.getElementById('buyBtn');
-    let recipientId = null;
-
-    // 1) Поиск получателя
-    usernameEl.addEventListener('blur', async () => {
-      const name = usernameEl.value.trim();
-      if (!name) return;
-      userError.textContent = '';
-      const res = await fetch('/api/recipient', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ username: name })
+    document.addEventListener('DOMContentLoaded', () => {
+      const ton = new TonConnectUI.TonConnectUI({
+        manifestUrl: `${location.origin}/tonconnect-manifest.json`,
+        buttonRootId: 'ton-connect'
       });
-      const data = await res.json();
-      if (data.ok) {
-        recipientId = data.recipient;
-      } else {
-        userError.textContent = 'User not found';
-        recipientId = null;
+
+      const usernameEl = document.getElementById('username');
+      const userError  = document.getElementById('userError');
+      const qtyEl      = document.getElementById('quantity');
+      const qtyError   = document.getElementById('qtyError');
+      const buyBtn     = document.getElementById('buyBtn');
+      let recipientId  = null;
+
+      // 1) Поиск получателя
+      usernameEl.addEventListener('blur', async () => {
+        const name = usernameEl.value.trim();
+        if (!name) return;
+        userError.textContent = '';
+        const res = await fetch('/api/recipient', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ username: name })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          recipientId = data.recipient;
+        } else {
+          recipientId = null;
+          userError.textContent = 'User not found';
+        }
+        updateButton();
+      });
+
+      // 2) Валидация количества
+      qtyEl.addEventListener('input', () => {
+        const q = parseInt(qtyEl.value, 10);
+        qtyError.textContent = '';
+        if (isNaN(q) || q < 1) {
+          qtyError.textContent = 'Enter a quantity ≥ 1';
+        }
+        updateButton();
+      });
+
+      // 3) Купить
+      buyBtn.addEventListener('click', async () => {
+        if (!ton.connected || !recipientId) return;
+        const q = parseInt(qtyEl.value, 10);
+        if (isNaN(q) || q < 1) return;
+        const res = await fetch('/api/buy', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ recipient: recipientId, quantity: q })
+        });
+        const d = await res.json();
+        if (!d.ok) return alert('Error: ' + d.error);
+
+        try {
+          await ton.sendTransaction({
+            validUntil: d.validUntil,
+            messages: d.messages.map(m => ({
+              to: m.to,
+              amount: m.amount,
+              payload: m.payload
+            }))
+          });
+          alert('✅ Transaction sent!');
+        } catch (e) {
+          alert('Send error: ' + e.message);
+        }
+      });
+
+      function updateButton() {
+        const okQty = parseInt(qtyEl.value, 10) >= 1;
+        const enabled = ton.connected && recipientId && okQty;
+        buyBtn.disabled = !enabled;
+        buyBtn.classList.toggle('enabled', enabled);
       }
-      updateButton();
+
+      ton.onStatusChange(updateButton);
     });
-
-    // 2) Валидация количества
-    qtyEl.addEventListener('input', () => {
-      const q = parseInt(qtyEl.value,10);
-      qtyError.textContent = '';
-      if (isNaN(q) || q < 1) {
-        qtyError.textContent = 'Введите количество ≥ 1';
-      }
-      updateButton();
-    });
-
-    // 3) Создание и отправка транзакции через Ton Connect
-    buyBtn.addEventListener('click', async () => {
-      if (!ton.connected || !recipientId) return;
-      const q = parseInt(qtyEl.value,10);
-      if (isNaN(q) || q < 1) return;
-      const res = await fetch('/api/buy', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ recipient: recipientId, quantity: q })
-      });
-      const d = await res.json();
-      if (!d.ok) return alert('Error: ' + d.error);
-
-      // Ton Connect ожидает validUntil и массив messages
-      await ton.sendTransaction({
-        validUntil: d.validUntil,
-        messages: d.messages.map(m => ({
-          to: m.to,
-          amount: m.amount,
-          payload: m.payload
-        }))
-      });
-      alert('✅ Transaction sent!');
-    });
-
-    function updateButton() {
-      const okQty = parseInt(qtyEl.value,10) >= 1;
-      const enabled = ton.connected && recipientId && okQty;
-      buyBtn.disabled = !enabled;
-      buyBtn.classList.toggle('enabled', enabled);
-    }
-
-    ton.onStatusChange(updateButton);
-  });
   </script>
 </body>
 </html>
