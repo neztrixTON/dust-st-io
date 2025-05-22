@@ -6,11 +6,13 @@
   <title>DUST_IO</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@600&family=Anton&display=swap" rel="stylesheet">
+
+  <!-- Manifest TON Connect -->
   <link rel="manifest" href="/tonconnect-manifest.json">
+  <!-- TON Connect UI SDK -->
   <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js" defer></script>
 
   <style>
-    /* СТИЛИ (без изменений) */
     :root {
       --primary: #1A2026;
       --header: #212932;
@@ -126,10 +128,9 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const ton = new TON_CONNECT_UI.TonConnectUI({
-        manifestUrl: '/tonconnect-manifest.json',
+        manifestUrl: window.location.origin + '/tonconnect-manifest.json',
         buttonRootId: 'ton-connect'
       });
-
       let walletConnected = false;
       ton.onStatusChange(() => {
         walletConnected = ton.connected;
@@ -168,30 +169,28 @@
 
       usernameEl.addEventListener('blur', async () => {
         const u = usernameEl.value.trim();
+        console.log('Lookup recipient:', u);
         if (!u) return;
         userErrorEl.textContent = '';
         usernameIcon.src = 'Search.svg';
-        try {
-          const res = await fetch('/api/recipient', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: u })
-          });
-          const j = await res.json();
-          if (j.ok) {
-            recipientId = j.recipient;
-            usernameEl.value = j.name;
-            usernameEl.disabled = true;
-            avatarEl.src = j.photo;
-            avatarEl.style.display = 'block';
-            clearUserEl.style.display = 'block';
-            if (amountEl.value) amountEl.dispatchEvent(new Event('input'));
-          } else {
-            userErrorEl.textContent = 'User not found';
-            usernameIcon.src = 'error.svg';
-          }
-        } catch (err) {
-          userErrorEl.textContent = 'Error fetching user';
+        const res = await fetch('/api/recipient', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ username: u })
+        });
+        console.log('/api/recipient status:', res.status);
+        const j = await res.json();
+        console.log('/api/recipient body:', j);
+        if (j.ok) {
+          recipientId = j.recipient;
+          usernameEl.value    = j.name;
+          usernameEl.disabled = true;
+          avatarEl.src        = j.photo;
+          avatarEl.style.display = 'block';
+          clearUserEl.style.display = 'block';
+          if (amountEl.value) amountEl.dispatchEvent(new Event('input'));
+        } else {
+          userErrorEl.textContent = 'User not found';
+          usernameIcon.src = 'error.svg';
         }
         updateBuyBtn();
       });
@@ -199,48 +198,63 @@
       amountEl.addEventListener('input', async () => {
         amountErrorEl.textContent = '';
         const v = parseInt(amountEl.value, 10);
+        console.log('Fetching price:', v, 'for recipient', recipientId);
         if (isNaN(v) || v < 50 || v > 1000000) {
           priceInline.style.display = 'none';
-          amountErrorEl.textContent = v < 50 ? 'Min. 50 stars' : 'Max. 1,000,000 stars';
+          if (v < 50) amountErrorEl.textContent = 'Min. 50 stars';
+          if (v > 1000000) amountErrorEl.textContent = 'Max. 1,000,000 stars';
+          buyBtn.textContent = 'Buy Stars';
           return updateBuyBtn();
         }
         if (recipientId) {
-          const r = await fetch('/api/price', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ recipient: recipientId, quantity: v })
-          });
+          const r = await fetch('/api/price',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ recipient: recipientId, quantity: v }) });
           const d = await r.json();
+          console.log('/api/price body:', d);
           if (d.ok) {
+            priceSpan.textContent = parseFloat(d.amount).toFixed(4);
             priceInline.style.display = 'flex';
-            priceSpan.textContent = d.amountTon + ' TON';
+            buyBtn.textContent = `Buy ${v} Stars`;
           }
         }
         updateBuyBtn();
       });
 
       buyBtn.addEventListener('click', async () => {
-        if (!buyBtn.classList.contains('enabled')) return;
-        const amount = parseInt(amountEl.value, 10);
-        const res = await fetch('/api/buy', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ recipient: recipientId, quantity: amount })
+        if (!walletConnected || !recipientId) return;
+        const qty = parseInt(amountEl.value, 10);
+        if (!(qty >= 50 && qty <= 1000000)) return;
+        console.log('Initiating buy:', recipientId, qty);
+        const r = await fetch('/api/buy', {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ recipient: recipientId, quantity: qty })
         });
-        const j = await res.json();
-        if (j.ok) {
-          ton.sendTransaction({
-            validUntil: j.validUntil,
-            messages: j.messages
-          });
+        const j = await r.json();
+        console.log('/api/buy body:', j);
+        if (!j.ok) {
+          return alert('Error creating transaction: ' + j.error);
+        }
+        const tx = {
+          validUntil: j.validUntil,
+          messages: [{ address: j.address, amount: j.amount, payload: j.payload }]
+        };
+        try {
+          await ton.sendTransaction(tx);
+          alert('Transaction sent to wallet!');
+        } catch (e) {
+          console.error(e);
+          alert('Send error: ' + e.message);
         }
       });
 
       function updateBuyBtn() {
-        const enabled = walletConnected && recipientId && parseInt(amountEl.value, 10) >= 50;
-        buyBtn.classList.toggle('enabled', enabled);
-        buyBtn.disabled = !enabled;
+        const okQty = parseInt(amountEl.value,10) >= 50 && parseInt(amountEl.value,10) <= 1000000;
+        const en = walletConnected && recipientId && okQty;
+        buyBtn.disabled = !en;
+        buyBtn.classList.toggle('enabled', en);
       }
+
+      // Инициализация
+      updateBuyBtn();
     });
   </script>
 </body>
